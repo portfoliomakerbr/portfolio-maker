@@ -192,5 +192,5 @@ export function exportPortfolioWord(portfolio: Portfolio) {
     </html>`
 
   const blob = new Blob(['﻿', html], { type: 'application/msword' })
-  downloadBlob(blob, `portfolio-${portfolio.username}.doc`)
+  downloadBlob(blob, `portfolio-${portfolio.username}.docx`)
 }
