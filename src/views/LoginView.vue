@@ -2,10 +2,11 @@
 import { computed, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import PasswordField from '../components/ui/PasswordField.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { signIn, signInWithGoogle } = useAuth()
+const { signIn, signInWithGoogle, resendConfirmation } = useAuth()
 
 const email = ref('')
 const password = ref('')
@@ -13,6 +14,9 @@ const error = ref<string | null>(null)
 const loading = ref(false)
 const remainingAttempts = ref<number | null>(null)
 const resetInSeconds = ref<number | null>(null)
+const emailNotConfirmed = ref(false)
+const resending = ref(false)
+const resent = ref(false)
 
 // Contagem regressiva do bloqueio temporário. Timer local simples (setInterval
 // + limpeza em onUnmounted) — não precisa de composable próprio pra um estado
@@ -49,13 +53,17 @@ async function handleSubmit() {
   error.value = null
   remainingAttempts.value = null
   resetInSeconds.value = null
+  emailNotConfirmed.value = false
+  resent.value = false
 
   const result = await signIn(email.value, password.value)
   loading.value = false
 
   if (result.error) {
     error.value = result.error
-    if (result.locked && result.lockedForSeconds) {
+    if (result.emailNotConfirmed) {
+      emailNotConfirmed.value = true
+    } else if (result.locked && result.lockedForSeconds) {
       startCountdown(result.lockedForSeconds)
     } else {
       remainingAttempts.value = result.remainingAttempts ?? null
@@ -66,6 +74,18 @@ async function handleSubmit() {
 
   const redirect = (route.query.redirect as string) || '/edit'
   router.push(redirect)
+}
+
+async function handleResendConfirmation() {
+  resending.value = true
+  const { error: resendError } = await resendConfirmation(email.value)
+  resending.value = false
+
+  if (resendError) {
+    error.value = resendError
+    return
+  }
+  resent.value = true
 }
 
 async function handleGoogle() {
@@ -83,19 +103,22 @@ async function handleGoogle() {
         <label>E-mail</label>
         <input v-model="email" class="input" type="email" required autocomplete="email" />
       </div>
-      <div class="field">
-        <label>Senha</label>
-        <input
-          v-model="password"
-          class="input"
-          type="password"
-          required
-          autocomplete="current-password"
-          :disabled="lockedForSeconds !== null"
-        />
-      </div>
+      <PasswordField
+        v-model="password"
+        label="Senha"
+        required
+        autocomplete="current-password"
+        :disabled="lockedForSeconds !== null"
+      />
 
       <p v-if="error" class="error-text">{{ error }}</p>
+
+      <div v-if="emailNotConfirmed" class="confirm-hint">
+        <p v-if="resent" class="muted">E-mail reenviado! Confira sua caixa de entrada (e o spam).</p>
+        <button v-else type="button" class="btn btn-secondary" :disabled="resending" @click="handleResendConfirmation">
+          {{ resending ? 'Reenviando...' : 'Reenviar e-mail de confirmação' }}
+        </button>
+      </div>
 
       <p v-if="lockedForSeconds !== null" class="error-text">
         Tente novamente em <strong>{{ lockedMinutesLabel }}</strong>.
@@ -136,6 +159,10 @@ async function handleGoogle() {
 
 .attempts-hint {
   font-size: 0.85rem;
+}
+
+.confirm-hint {
+  margin-bottom: var(--space-4);
 }
 
 .links-row {

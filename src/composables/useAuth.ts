@@ -8,6 +8,7 @@ export interface LoginResult {
   lockedForSeconds?: number
   remainingAttempts?: number
   resetInSeconds?: number
+  emailNotConfirmed?: boolean
 }
 
 interface AuthContext {
@@ -17,7 +18,8 @@ interface AuthContext {
   loading: Ref<boolean>
   signIn: (email: string, password: string) => Promise<LoginResult>
   signInWithGoogle: () => Promise<{ error: string | null }>
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>
+  signUp: (email: string, password: string) => Promise<{ error: string | null; hasSession: boolean }>
+  resendConfirmation: (email: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   requestPasswordReset: (email: string) => Promise<{ error: string | null }>
   updatePassword: (password: string) => Promise<{ error: string | null }>
@@ -72,6 +74,7 @@ export function provideAuth(): AuthContext {
         lockedForSeconds: payload?.lockedForSeconds as number | undefined,
         remainingAttempts: payload?.remainingAttempts as number | undefined,
         resetInSeconds: payload?.resetInSeconds as number | undefined,
+        emailNotConfirmed: payload?.error === 'email_not_confirmed',
       }
     }
 
@@ -98,9 +101,14 @@ export function provideAuth(): AuthContext {
     return { error: error?.message ?? null }
   }
 
-  async function signUp(email: string, password: string) {
-    const { error } = await supabase.auth.signUp({ email, password })
+  async function resendConfirmation(email: string) {
+    const { error } = await supabase.auth.resend({ type: 'signup', email })
     return { error: error?.message ?? null }
+  }
+
+  async function signUp(email: string, password: string) {
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    return { error: error?.message ?? null, hasSession: Boolean(data.session) }
   }
 
   async function signOut() {
@@ -127,6 +135,7 @@ export function provideAuth(): AuthContext {
     signIn,
     signInWithGoogle,
     signUp,
+    resendConfirmation,
     signOut,
     requestPasswordReset,
     updatePassword,

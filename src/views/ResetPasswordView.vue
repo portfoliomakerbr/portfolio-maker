@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import PasswordField from '../components/ui/PasswordField.vue'
 
 const router = useRouter()
 const { updatePassword } = useAuth()
@@ -35,10 +36,7 @@ async function handleSubmit() {
     </div>
 
     <form v-else class="card" @submit.prevent="handleSubmit">
-      <div class="field">
-        <label>Nova senha</label>
-        <input v-model="password" class="input" type="password" required minlength="6" autocomplete="new-password" />
-      </div>
+      <PasswordField v-model="password" label="Nova senha" required :minlength="6" autocomplete="new-password" />
       <p v-if="error" class="error-text">{{ error }}</p>
       <button class="btn btn-primary" type="submit" :disabled="loading">
         {{ loading ? 'Salvando...' : 'Salvar nova senha' }}

@@ -136,6 +136,17 @@ https://SEU-PROJETO.supabase.co/functions/v1/ping
 
 A justificativa e os detalhes dessa estratégia estão documentados em [ARCHITECTURE.md](./ARCHITECTURE.md#auto-ping).
 
+## Testes automatizados
+
+```bash
+SUPABASE_URL=https://SEU-PROJETO.supabase.co \
+SUPABASE_ANON_KEY=... \
+SUPABASE_SERVICE_ROLE_KEY=... \
+npm run test:auth
+```
+
+Bate direto nas APIs reais do Supabase (nada mockado) e prova o fluxo inteiro de autenticação: cadastro, login certo, login errado descontando tentativa, bloqueio no 5º erro, bloqueio mantido mesmo com a senha certa, e recuperação de senha. Detalhes em [ARCHITECTURE.md](./ARCHITECTURE.md#testes-automatizados-de-autenticação).
+
 ## Build de produção
 
 Para gerar o build de produção:

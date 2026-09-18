@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import PasswordField from '../components/ui/PasswordField.vue'
 
 const router = useRouter()
 const { signUp, signInWithGoogle } = useAuth()
@@ -15,13 +16,18 @@ const done = ref(false)
 async function handleSubmit() {
   loading.value = true
   error.value = null
-  const { error: signUpError } = await signUp(email.value, password.value)
+  const { error: signUpError, hasSession } = await signUp(email.value, password.value)
   loading.value = false
 
   if (signUpError) {
     error.value = signUpError
     return
   }
+  if (hasSession) {
+    await router.push('/edit')
+    return
+  }
+
   done.value = true
 }
 
@@ -37,7 +43,7 @@ async function handleGoogle() {
     <h1>Criar conta</h1>
 
     <div v-if="done" class="card">
-      <p>Conta criada! Confirme seu e-mail (se a confirmação estiver ativada no projeto) e depois faça login.</p>
+      <p>Conta criada! Agora você já pode fazer login.</p>
       <button class="btn btn-primary" @click="router.push('/login')">Ir para login</button>
     </div>
 
@@ -46,17 +52,7 @@ async function handleGoogle() {
         <label>E-mail</label>
         <input v-model="email" class="input" type="email" required autocomplete="email" />
       </div>
-      <div class="field">
-        <label>Senha</label>
-        <input
-          v-model="password"
-          class="input"
-          type="password"
-          required
-          minlength="6"
-          autocomplete="new-password"
-        />
-      </div>
+      <PasswordField v-model="password" label="Senha" required :minlength="6" autocomplete="new-password" />
       <p v-if="error" class="error-text">{{ error }}</p>
       <button class="btn btn-primary" type="submit" :disabled="loading">
         {{ loading ? 'Criando...' : 'Criar conta' }}
@@ -79,4 +75,5 @@ async function handleGoogle() {
   justify-content: center;
   margin-top: var(--space-3);
 }
+
 </style>

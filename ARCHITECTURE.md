@@ -98,6 +98,11 @@ O Supabase Auth não tem "N tentativas erradas → bloqueia por X minutos" nativ
 - Se a última tentativa foi há mais de **15 minutos**, o contador de erros reseta sozinho antes de processar a nova tentativa (é o "tempo pra resetar a contagem" que a UI menciona).
 - A senha em si continua sendo validada pelo Supabase Auth (`auth.signInWithPassword`, com a anon key) — a function só decide *se* deixa tentar, nunca reimplementa verificação de senha.
 - Em caso de sucesso, a function devolve `access_token`/`refresh_token` e o frontend aplica a sessão via `supabase.auth.setSession(...)` (`useAuth.ts`).
+- E-mail não confirmado (`authError.code === 'email_not_confirmed'`) é tratado à parte e **não conta como tentativa errada** — é um estado diferente de "senha errada" e penalizar isso seria injusto. A function devolve `error: 'email_not_confirmed'` e o `LoginView.vue` oferece "Reenviar e-mail de confirmação" (`supabase.auth.resend`) em vez da mensagem genérica de senha incorreta.
+
+### Confirmação de e-mail desativada de propósito
+
+`mailer_autoconfirm: true` — contas ficam confirmadas e utilizáveis imediatamente no cadastro, sem precisar clicar em link de e-mail nenhum. Isso não é uma configuração provisória por preguiça: **todo cadastro por senha ficava com `email_confirmed_at` nulo pra sempre** (SMTP não entregava o e-mail de confirmação de forma confiável — ver histórico de troubleshooting nesta seção logo abaixo), e o Supabase recusa login de conta não confirmada. Como o objetivo aqui é "qualquer um consegue testar o app rapidamente, sem depender de infraestrutura de e-mail terceirizada funcionar 100% do tempo", desligar a exigência de confirmação é a escolha certa pra esse produto — troca-off consciente: alguém pode cadastrar um e-mail que não é dele (não recebe nada, só não consegue usar "esqueci a senha" depois), mas não há dado sensível em jogo que justifique a fricção extra.
 
 ## Ícones de tecnologia e de link
 
@@ -130,6 +135,23 @@ Esse commit existe por causa de uma pegadinha real do GitHub Actions: **workflow
 ## Fluxo de salvamento
 
 `EditPortfolioView.vue` mantém **um único formulário** (`usePortfolioForm`) cobrindo identidade, skills, foto, links, projetos, formação acadêmica e experiências, com **um botão salvar** (desabilitado quando não há nada para salvar — mesmo `isDirty` usado pelo botão "Cancelar alterações") que chama `portfolio-save` uma vez com o payload inteiro — espelhando a semântica de upsert único que o backend antigo também tinha (`POST /portfolios/save` recebia o documento completo). Evita bugs de salvamento parcial que uma tela dividida em sub-rotas por seção introduziria.
+
+## Testes automatizados de autenticação
+
+[`scripts/test-auth.mjs`](./scripts/test-auth.mjs) — script Node sem dependências extras (só `fetch` nativo) que bate direto nas APIs reais do Supabase (não mocks) pra provar que o fluxo inteiro funciona: cadastro → confirmação automática → login certo → login errado (desconta tentativa) → 5º erro bloqueia → login certo continua bloqueado enquanto o timer não zera → pedido de recuperação de senha é aceito. No fim, apaga o usuário de teste e o registro de tentativas que criou.
+
+Usa a Admin API (`/auth/v1/admin/users`, precisa da `service_role` key) só pra inspecionar/limpar a conta de teste — a validação de login em si passa pelas mesmas rotas públicas que o app usa (`/auth/v1/signup`, a edge function `login`, `/auth/v1/recover`).
+
+```bash
+SUPABASE_URL=https://SEU-PROJETO.supabase.co \
+SUPABASE_ANON_KEY=... \
+SUPABASE_SERVICE_ROLE_KEY=... \
+npm run test:auth
+```
+
+(ou coloque as três variáveis num `.env.test` na raiz — já está no `.gitignore`, nunca deve ser commitado por causa da `service_role` key).
+
+A conta de teste usa `@resend.dev` (domínio de sandbox do Resend, nosso provedor de SMTP), não `@example.com`. Isso não é cosmético: o Resend **recusa** enviar pra domínios reservados tipo `example.com`/`test.com` (`550 "Invalid to field..."`), e o Supabase só tenta mandar e-mail de verdade quando a conta existe de fato — pra e-mails inexistentes o `/recover` finge sucesso (200) sem tocar no SMTP, pra não vazar quais e-mails têm conta. Ou seja: testar com um e-mail fake faz o teste de recuperação de senha "passar" sem provar nada — foi exatamente isso que aconteceu numa primeira versão desse script durante o debug do bug relatado (login não funcionava, e-mail de recuperação não chegava): o teste com `@example.com` mascarava o problema real em vez de expor.
 
 ## Download em PDF/Word
 

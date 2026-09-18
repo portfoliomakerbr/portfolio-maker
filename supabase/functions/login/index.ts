@@ -73,6 +73,23 @@ Deno.serve(async (req) => {
 
   const { error: authError, data: authData } = await anonClient().auth.signInWithPassword({ email, password })
 
+  // E-mail nunca confirmado não é "senha errada" — é um estado totalmente
+  // diferente (a conta existe, a senha pode até estar certa, mas o Supabase
+  // recusa a sessão até o e-mail ser confirmado). Tratar isso como tentativa
+  // errada penalizaria injustamente quem simplesmente ainda não confirmou
+  // (ou cujo e-mail de confirmação nunca chegou) — por isso não conta pro
+  // contador de bloqueio, e a mensagem é específica.
+  if (authError?.code === 'email_not_confirmed') {
+    return jsonResponse(
+      {
+        error: 'email_not_confirmed',
+        message: 'Confirme seu e-mail antes de entrar — verifique sua caixa de entrada (e o spam).',
+        locked: false,
+      },
+      401,
+    )
+  }
+
   if (!authError && authData.session) {
     // Login certo: zera o contador.
     await admin.from('login_attempts').upsert({
