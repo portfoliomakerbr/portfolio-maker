@@ -144,6 +144,14 @@ Para gerar o build de produção:
 npm run build
 ```
 
+## Deploy (Netlify)
+
+O repositório já tem [`netlify.toml`](./netlify.toml) configurado (build command, publish dir `dist`, e o rewrite `/* → /index.html` necessário porque o app usa `vue-router` em modo history — sem isso, recarregar a página em qualquer rota que não seja `/`, tipo `/seu-username` ou `/edit`, retorna 404 do Netlify).
+
+1. No Netlify, **Add new site → Import an existing project** e aponta pro repositório.
+2. **Site settings → Environment variables** → adicione as mesmas variáveis do `.env.local`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e, se for usar o formulário de contato, as três `VITE_EMAILJS_*`. Elas não vêm do repositório (só o `.env.example`, sem valores reais, é commitado).
+3. Depois do primeiro deploy, com a URL definitiva em mãos (o domínio `*.netlify.app` ou seu domínio próprio), atualize no **Supabase**: Authentication → URL Configuration → `Site URL` (hoje aponta pra `http://localhost:3000`, usado como base pros links de recuperação de senha e pelo login com Google) e adicione a mesma URL em `Additional Redirect URLs`. Sem isso, o e-mail de "esqueci minha senha" e o retorno do login com Google continuam levando pro localhost.
+
 ## Arquitetura
 
 Para conhecer a estrutura de pastas, organização dos composables, modelo de dados, políticas de segurança, Edge Functions e estratégia de auto-ping, consulte **[ARCHITECTURE.md](./ARCHITECTURE.md)**.

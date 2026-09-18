@@ -1,0 +1,15 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA com vue-router em modo history: sem isso, recarregar a página em
+# qualquer rota que não seja "/" (ex.: /gustavoksbr, /edit, /login) retorna
+# 404 do Netlify, porque não existe um arquivo físico nesses caminhos — só
+# index.html + JS decidindo a rota no navegador.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
