@@ -222,27 +222,32 @@ async function handleCancel() {
 
 /* Fixa embaixo da viewport (não do formulário) — o botão salvar/cancelar
    fica sempre acessível sem precisar rolar até o fim, principal pedido
-   por trás dessa mudança. */
+   por trás dessa mudança. Ancorada no canto inferior ESQUERDO (não uma barra
+   full-width) de propósito: o selo "Powered by Netlify" do plano grátis vive
+   fixo no canto inferior direito e não tem como ser removido por CSS nosso
+   (é injetado pela própria plataforma) — então em vez de brigar com ele,
+   o painel de ações nem chega perto dali. */
 .action-bar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: var(--space-4);
+  bottom: var(--space-4);
   z-index: 20;
+  max-width: calc(100vw - var(--space-4) * 2);
   background: var(--color-surface);
-  border-top: 1px solid var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: var(--space-3) var(--space-4);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .action-bar-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
-  margin-left: auto;
 }
 
 @media (max-width: 560px) {
@@ -250,17 +255,13 @@ async function handleCancel() {
     grid-template-columns: 1fr;
   }
 
+  .edit-form {
+    padding-bottom: 140px;
+  }
+
   .action-bar {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .action-bar-buttons {
-    margin-left: 0;
-  }
-
-  .action-bar-buttons .btn {
-    flex: 1;
   }
 }
 </style>
