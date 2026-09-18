@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
 
 const router = useRouter()
-const { isAuthenticated, signOut } = useAuth()
+const { isAuthenticated, user, signOut } = useAuth()
 
 async function handleSignOut() {
   await signOut()
@@ -14,11 +14,12 @@ async function handleSignOut() {
 <template>
   <header class="header">
     <div class="header-inner">
-      <router-link to="/" class="brand">PortfolioMaker <span class="brand-tag">Vue</span></router-link>
+      <router-link to="/" class="brand">PortfolioMaker </router-link>
       <nav class="nav">
         <router-link to="/">Galeria</router-link>
         <template v-if="isAuthenticated">
           <router-link to="/edit">Meu portfólio</router-link>
+          <span v-if="user?.email" class="user-email" :title="user.email">{{ user.email }}</span>
           <button class="btn btn-secondary" @click="handleSignOut">Sair</button>
         </template>
         <template v-else>
@@ -73,5 +74,18 @@ async function handleSignOut() {
 
 .nav a.router-link-active {
   color: var(--color-text);
+}
+
+.nav a.btn-primary {
+  color: white;
+}
+
+.user-email {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

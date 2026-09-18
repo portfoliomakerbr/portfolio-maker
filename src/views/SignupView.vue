@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
-const { signUp } = useAuth()
+const { signUp, signInWithGoogle } = useAuth()
 
 const email = ref('')
 const password = ref('')
@@ -23,6 +23,12 @@ async function handleSubmit() {
     return
   }
   done.value = true
+}
+
+async function handleGoogle() {
+  error.value = null
+  const { error: googleError } = await signInWithGoogle()
+  if (googleError) error.value = googleError
 }
 </script>
 
@@ -55,6 +61,10 @@ async function handleSubmit() {
       <button class="btn btn-primary" type="submit" :disabled="loading">
         {{ loading ? 'Criando...' : 'Criar conta' }}
       </button>
+
+      <button type="button" class="btn btn-secondary google-btn" @click="handleGoogle">
+        Criar conta com Google
+      </button>
     </form>
   </div>
 </template>
@@ -62,5 +72,11 @@ async function handleSubmit() {
 <style scoped>
 .narrow {
   max-width: 420px;
+}
+
+.google-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--space-3);
 }
 </style>

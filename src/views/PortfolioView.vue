@@ -63,9 +63,15 @@ function exportarPdf() {
               <span v-for="tec in proj.tecnologias" :key="tec" class="tag">{{ tec }}</span>
             </div>
             <div class="links-row">
-              <a v-if="proj.linkDoProjeto" :href="proj.linkDoProjeto" target="_blank" rel="noopener">Ver projeto</a>
-              <a v-if="proj.linkDoRepositorio" :href="proj.linkDoRepositorio" target="_blank" rel="noopener">Repositório</a>
-              <a v-if="proj.linkYoutube" :href="proj.linkYoutube" target="_blank" rel="noopener">YouTube</a>
+              <a v-if="proj.linkDoProjeto" class="link-btn" :href="proj.linkDoProjeto" target="_blank" rel="noopener">
+                🌐 Ver projeto
+              </a>
+              <a v-if="proj.linkDoRepositorio" class="link-btn" :href="proj.linkDoRepositorio" target="_blank" rel="noopener">
+                📦 Repositório
+              </a>
+              <a v-if="proj.linkYoutube" class="link-btn" :href="proj.linkYoutube" target="_blank" rel="noopener">
+                ▶️ YouTube
+              </a>
             </div>
           </div>
         </div>
@@ -122,10 +128,35 @@ function exportarPdf() {
   margin: var(--space-3) 0;
 }
 
+/* Separado visualmente das tags de tecnologia (pill, preenchida, cor de
+   destaque) por um divisor + forma retangular com borda: são ações
+   ("ir para"), não atributos do projeto, e precisam parecer clicáveis de
+   um jeito diferente das tags pra não serem confundidos com elas. */
 .links-row {
   display: flex;
-  gap: var(--space-3);
-  font-size: 0.85rem;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.8rem;
   font-weight: 600;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  text-decoration: none;
+}
+
+.link-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  text-decoration: none;
 }
 </style>

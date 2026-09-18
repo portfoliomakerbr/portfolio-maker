@@ -1,4 +1,10 @@
 :root {
+  /* Sem isso, controles nativos do navegador (ícone do <input type="date">,
+     scrollbar do SO, etc.) continuam pintados pro tema claro mesmo com o
+     resto da UI em dark mode — o ícone do calendário ficava escuro sobre
+     fundo escuro, quase invisível. */
+  color-scheme: light;
+
   --color-bg: #fafafa;
   --color-surface: #ffffff;
   --color-border: #e4e4e7;
@@ -33,6 +39,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
+
     --color-bg: #121214;
     --color-surface: #1b1b1f;
     --color-border: #2c2c33;

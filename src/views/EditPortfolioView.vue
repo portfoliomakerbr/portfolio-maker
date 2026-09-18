@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { usePortfolio } from '../composables/usePortfolio'
 import { usePortfolioForm } from '../composables/usePortfolioForm'
 import { useDraft } from '../composables/useDraft'
+import { useConfirmDialog } from '../composables/useConfirmDialog'
 import { isUsernameValida } from '../types/reservedUsernames'
 import type { PortfolioFormInput } from '../types/portfolio'
 import SkillsEditor from '../components/portfolio/SkillsEditor.vue'
@@ -16,6 +17,18 @@ const router = useRouter()
 const { portfolio, loading, fetchOwn } = usePortfolio()
 const { form, habilidadesText, saving, saveError, loadFrom, save } = usePortfolioForm('')
 const { loadDraft, clearDraft, restored } = useDraft('portfolio-edit-draft', () => form)
+const { confirm } = useConfirmDialog()
+
+// Snapshot do formulário assim que carrega, pra comparar contra o estado
+// atual e saber se há alterações não salvas (botão "Cancelar alterações").
+// JSON.stringify é comparação rasa o bastante pra esse formulário (mesmo
+// padrão já usado em useDraft.ts) — não precisa de um deep-equal dedicado.
+const originalSnapshot = ref('')
+const isDirty = computed(() => JSON.stringify(form) !== originalSnapshot.value)
+
+function snapshotForm() {
+  originalSnapshot.value = JSON.stringify(form)
+}
 
 const usernameInput = useTemplateRef<HTMLInputElement>('usernameInput')
 const usernameError = computed(() => {
@@ -47,6 +60,7 @@ onMounted(async () => {
     const draft = loadDraft()
     if (draft) loadFrom(draft as PortfolioFormInput)
   }
+  snapshotForm()
 })
 
 function onFotoUploaded(result: { url: string; path: string }) {
@@ -77,8 +91,21 @@ async function handleSave() {
   }
 
   clearDraft()
+  snapshotForm()
   successMessage.value = 'Portfólio salvo!'
   router.push(`/${form.username}`)
+}
+
+async function handleCancel() {
+  if (!isDirty.value) return
+
+  const ok = await confirm('Você quer cancelar mesmo? As alterações feitas agora serão perdidas.', 'Cancelar alterações')
+  if (!ok) return
+
+  loadFrom(JSON.parse(originalSnapshot.value) as PortfolioFormInput)
+  clearDraft()
+  saveError.value = null
+  successMessage.value = null
 }
 </script>
 
@@ -165,16 +192,33 @@ async function handleSave() {
       </section>
 
       <p v-if="saveError" class="error-text">{{ saveError }}</p>
-      <p v-if="successMessage" class="success-text">{{ successMessage }}</p>
 
-      <button class="btn btn-primary" type="submit" :disabled="saving || !!usernameError">
-        {{ saving ? 'Salvando...' : 'Salvar portfólio' }}
-      </button>
+      <div class="action-bar no-print">
+        <p v-if="successMessage" class="success-text">{{ successMessage }}</p>
+        <div class="action-bar-buttons">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            :disabled="!isDirty"
+            @click="handleCancel"
+          >
+            Cancelar alterações
+          </button>
+          <button class="btn btn-primary" type="submit" :disabled="saving || !!usernameError">
+            {{ saving ? 'Salvando...' : 'Salvar portfólio' }}
+          </button>
+        </div>
+      </div>
     </form>
   </div>
 </template>
 
 <style scoped>
+.edit-form {
+  /* Espaço reservado pra barra fixa não cobrir o final do formulário. */
+  padding-bottom: 88px;
+}
+
 .edit-form section {
   margin-bottom: var(--space-5);
 }
@@ -187,11 +231,50 @@ async function handleSave() {
 
 .success-text {
   color: var(--color-success);
+  margin: 0;
+}
+
+/* Fixa embaixo da viewport (não do formulário) — o botão salvar/cancelar
+   fica sempre acessível sem precisar rolar até o fim, principal pedido
+   por trás dessa mudança. */
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.action-bar-buttons {
+  display: flex;
+  gap: var(--space-3);
+  margin-left: auto;
 }
 
 @media (max-width: 560px) {
   .grid-2 {
     grid-template-columns: 1fr;
+  }
+
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-bar-buttons {
+    margin-left: 0;
+  }
+
+  .action-bar-buttons .btn {
+    flex: 1;
   }
 }
 </style>

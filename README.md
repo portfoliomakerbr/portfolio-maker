@@ -11,7 +11,8 @@ Repositório: [github.com/portfoliomakerbr/portfolio-maker](https://github.com/p
 * **Visualizar portfólios públicos** — navegar pela galeria e acessar portfólios através do username.
 * **Consultar perfil profissional** — visualizar informações pessoais, skills, links, experiências profissionais e projetos.
 * **Exportar portfólio em PDF** — gerar uma versão para impressão diretamente pelo navegador.
-* **Criar e gerenciar conta** — cadastro, login e recuperação de senha utilizando o Supabase Auth.
+* **Criar e gerenciar conta** — cadastro, login (com e-mail/senha ou com Google) e recuperação de senha utilizando o Supabase Auth.
+* **Proteção contra força bruta no login** — depois de tentativas erradas seguidas, a conta é bloqueada temporariamente; a tela mostra quantas tentativas restam e, se bloqueada, quanto tempo falta.
 * **Criar e editar portfólio** — cadastrar nome, descrição, localização, foto de perfil e imagem de fundo.
 * **Gerenciar informações profissionais** — adicionar e reordenar skills, links, experiências profissionais e projetos.
 * **Publicar portfólio personalizado** — cada usuário possui um único portfólio identificado por um `username` exclusivo, utilizado na URL pública.
@@ -59,14 +60,27 @@ As configurações ficam em `supabase/migrations/`.
 
 ### 3. Edge Functions
 
-Publique as Edge Functions:
+Publique as Edge Functions (`ping` e `login` precisam de `--no-verify-jwt`, porque são chamadas sem o usuário estar autenticado):
 
 ```bash
 supabase functions deploy portfolio-save
-supabase functions deploy ping
+supabase functions deploy ping --no-verify-jwt
+supabase functions deploy login --no-verify-jwt
 ```
 
-### 4. Frontend
+### 4. Login com Google (opcional)
+
+1. No [Google Cloud Console](https://console.cloud.google.com/apis/credentials), crie (ou reutilize) um OAuth Client ID do tipo "Web application" e adicione, em **Authorized redirect URIs**:
+   ```text
+   https://SEU-PROJETO.supabase.co/auth/v1/callback
+   ```
+2. No dashboard do Supabase: **Authentication → Providers → Google** → cole o Client ID e o Client Secret, e habilite.
+
+### 5. E-mails via SMTP customizado (opcional, recomendado)
+
+O mailer padrão do Supabase é limitado (poucos e-mails por hora, sem garantia de entrega). Para produção, configure um provedor de SMTP próprio (ex.: [Resend](https://resend.com)) em **Authentication → Emails → SMTP Settings**: host, porta, usuário e senha (API key) do provedor, e um remetente verificado no seu domínio.
+
+### 6. Frontend
 
 Instale as dependências e inicie o ambiente de desenvolvimento:
 
@@ -81,7 +95,7 @@ A aplicação estará disponível em:
 http://localhost:5173
 ```
 
-### 5. Auto-ping (opcional)
+### 7. Auto-ping (opcional)
 
 O workflow `.github/workflows/keep-alive.yml` pode ser utilizado para evitar que o projeto Supabase gratuito seja pausado por inatividade.
 

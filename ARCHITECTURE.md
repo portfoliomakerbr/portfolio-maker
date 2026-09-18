@@ -19,7 +19,8 @@ src/
 supabase/
 ├── migrations/                # schema + policies, versionadas
 └── functions/
-    ├── portfolio-save/         # única escrita "de negócio"
+    ├── portfolio-save/         # upsert do portfólio
+    ├── login/                   # login com bloqueio por tentativas erradas
     └── ping/                   # alvo do auto-ping
 ```
 
@@ -32,6 +33,7 @@ Vue não tem hooks no sentido do React (funções que só podem rodar dentro de 
 | Arquivo | Primitiva(s) | Por quê / onde é usado |
 |---|---|---|
 | [`useAuth.ts`](./src/composables/useAuth.ts) | `provide`/`inject`, `onMounted`/`onUnmounted` | Sessão global. `provideAuth()` roda **uma vez** em `App.vue` e assina `onAuthStateChange` uma única vez; qualquer componente pega a sessão via `inject` (`useAuth()`) sem re-assinar o listener. |
+| [`LoginView.vue`](./src/views/LoginView.vue) | `computed`, `setInterval`/`onUnmounted` | Contagem regressiva do bloqueio temporário — `lockedForSeconds` decrementa a cada segundo e `lockedMinutesLabel` (computed) formata `MM:SS`; o timer é limpo em `onUnmounted` pra não vazar entre navegações. |
 | [`usePortfolio.ts`](./src/composables/usePortfolio.ts) | `ref`, `computed` | Busca pública por username; `isOwnPortfolio` é `computed` a partir do `user_id` do portfólio carregado vs. o usuário logado (injetado de `useAuth`), pra decidir se mostra o botão "Editar". |
 | [`usePortfolioForm.ts`](./src/composables/usePortfolioForm.ts) | `reactive`, **`computed` writable** | O formulário inteiro é um `reactive()` (lido/gravado como unidade). `habilidadesText` é um computed com `get`/`set`: a UI edita skills como texto livre separado por vírgula, mas o modelo real é `string[]` — o `set` faz o parse/trim/dedupe na volta. |
 | [`useOrdenableList.ts`](./src/composables/useOrdenableList.ts) | composable genérico reutilizável | Mover item ↑/↓ e renumerar `ordem` — mesma regra usada por `ProjetosEditor` e `ExperienciasEditor`, extraída uma vez em vez de duplicada. |
@@ -62,9 +64,13 @@ Bucket `portfolios`, leitura pública, escrita restrita por prefixo de path: cad
 
 ### Auth
 
-Supabase Auth nativo (`signUp`, `signInWithPassword`, `resetPasswordForEmail`, `updateUser`) — substitui o JWT customizado e os três provedores de e-mail (JavaMail/Brevo/Make) do backend Java antigo. O fluxo de recovery-link (clicar no e-mail e cair em `/reset-password` já autenticado) é tratado automaticamente pelo `supabase-js` via `detectSessionInUrl: true` (padrão).
+Supabase Auth nativo (`signUp`, `signInWithPassword` via a function `login`, `signInWithOAuth('google')`, `resetPasswordForEmail`, `updateUser`) — substitui o JWT customizado e os três provedores de e-mail (JavaMail/Brevo/Make) do backend Java antigo. O fluxo de recovery-link (clicar no e-mail e cair em `/reset-password` já autenticado) e o fluxo de OAuth (voltar do Google já autenticado) são tratados automaticamente pelo `supabase-js` via `detectSessionInUrl: true` (padrão).
 
-### Por que só 2 edge functions
+**Login com Google**: habilitado via config de Auth do projeto (`external_google_enabled`, `external_google_client_id`, `external_google_secret` — configurados fora do repo, via dashboard/Management API, nunca commitados). O Client ID/Secret do Google precisa ter `https://<projeto>.supabase.co/auth/v1/callback` na lista de *Authorized redirect URIs* no Google Cloud Console.
+
+**E-mails via SMTP customizado**: o mailer padrão do Supabase tem um limite baixo de envios/hora (pensado pra evitar abuso da infra compartilhada deles) e pouca garantia de deliverability. Configuramos um provedor de SMTP próprio (ex.: Resend) nas configs de Auth (`smtp_host`, `smtp_user`, `smtp_pass`, etc.) — também fora do repo.
+
+### Por que só 3 edge functions
 
 O design inicial cogitou 4 (`portfolio-save`, `portfolio-get`, `portfolios-list`, `ping`), mas `portfolio-get` e `portfolios-list` foram descartadas: uma leitura pública com
 
@@ -72,10 +78,22 @@ O design inicial cogitou 4 (`portfolio-save`, `portfolio-get`, `portfolios-list`
 supabase.from('portfolios').select('*, projetos(*), experiencias(*), links(*)').eq('username', username)
 ```
 
-já resolve o join em 1 round-trip sob RLS, sem nenhuma lógica de negócio — criar uma function só pra isso seria um hop de rede a mais sem ganho nenhum, o oposto de "backend enxuto". Sobraram só as duas que genuinamente precisam de servidor:
+já resolve o join em 1 round-trip sob RLS, sem nenhuma lógica de negócio — criar uma function só pra isso seria um hop de rede a mais sem ganho nenhum, o oposto de "backend enxuto". Ficaram as que genuinamente precisam de servidor:
 
 - **`portfolio-save`** (autenticada): identifica o chamador via `supabase.auth.getUser(jwt)`, valida username (formato + lista de rotas reservadas do Vue Router, que o banco não conhece) e unicidade, faz upsert do portfólio e substitui (delete + reinsert) `projetos`/`experiencias`/`links`. Usa um client Supabase autenticado com o **JWT do chamador**, não a service-role key — a RLS continua sendo a linha de defesa real; a function só adiciona validação que a RLS não expressa.
-- **`ping`** (pública): handler trivial, alvo do workflow de keep-alive.
+- **`login`** (pública, `--no-verify-jwt`): ver seção "Bloqueio de login" abaixo.
+- **`ping`** (pública, `--no-verify-jwt`): handler trivial, alvo do workflow de keep-alive.
+
+`login` e `ping` precisam do deploy com `--no-verify-jwt` porque são chamadas por quem **ainda não tem sessão** (ou, no caso do `ping`, nenhum cliente Supabase envolvido — é um `curl` puro do GitHub Actions) — sem essa flag, o gateway do Supabase rejeita a requisição por falta de um JWT válido antes mesmo dela chegar no código da function.
+
+### Bloqueio de login por tentativas erradas
+
+O Supabase Auth não tem "N tentativas erradas → bloqueia por X minutos" nativo — só rate limit genérico de requisições por hora (`rate_limit_email_sent` etc., configurável em Authentication → Rate Limits ou via Management API). Pra dar essa proteção por conta (e mostrar ao usuário quantas tentativas restam / quanto tempo falta), o login passa pela edge function [`login`](./supabase/functions/login/index.ts), apoiada na tabela `public.login_attempts` (sem policies de RLS — só a function, com a service-role key, toca nela; não existe usuário autenticado nesse ponto do fluxo):
+
+- **5 tentativas erradas** → bloqueio de **15 minutos** (`locked_until` na tabela).
+- Se a última tentativa foi há mais de **15 minutos**, o contador de erros reseta sozinho antes de processar a nova tentativa (é o "tempo pra resetar a contagem" que a UI menciona).
+- A senha em si continua sendo validada pelo Supabase Auth (`auth.signInWithPassword`, com a anon key) — a function só decide *se* deixa tentar, nunca reimplementa verificação de senha.
+- Em caso de sucesso, a function devolve `access_token`/`refresh_token` e o frontend aplica a sessão via `supabase.auth.setSession(...)` (`useAuth.ts`).
 
 ## Auto-ping
 

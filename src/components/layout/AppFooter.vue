@@ -1,7 +1,6 @@
 <template>
   <footer class="footer">
     <p class="muted">
-      PortfolioMaker · Vue 3 + Supabase ·
       <a href="https://github.com/portfoliomakerbr/portfolio-maker" target="_blank" rel="noopener">
         Código no GitHub
       </a>
