@@ -14,7 +14,7 @@ Repositório: [github.com/portfoliomakerbr/portfolio-maker](https://github.com/p
 * **Criar e gerenciar conta** — cadastro, login (com e-mail/senha ou com Google) e recuperação de senha utilizando o Supabase Auth.
 * **Proteção contra força bruta no login** — depois de tentativas erradas seguidas, a conta é bloqueada temporariamente; a tela mostra quantas tentativas restam e, se bloqueada, quanto tempo falta.
 * **Criar e editar portfólio** — cadastrar nome, descrição, localização, foto de perfil e imagem de fundo.
-* **Gerenciar informações profissionais** — adicionar e reordenar skills, links, experiências profissionais e projetos.
+* **Gerenciar informações profissionais** — adicionar e reordenar skills, links, formação acadêmica, experiências profissionais e projetos.
 * **Publicar portfólio personalizado** — cada usuário possui um único portfólio identificado por um `username` exclusivo, utilizado na URL pública.
 
 ## Rodando localmente
@@ -51,7 +51,7 @@ supabase db push
 
 Isso configura:
 
-* Tabelas `portfolios`, `projetos`, `experiencias` e `links`;
+* Tabelas `portfolios`, `projetos`, `experiencias`, `formacoes_academicas` e `links`;
 * Políticas de segurança utilizando **Row Level Security (RLS)**;
 * Bucket de Storage `portfolios`;
 * Policies para gerenciamento dos arquivos.

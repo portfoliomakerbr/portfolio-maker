@@ -40,6 +40,18 @@ function exportarPdf() {
 
       <PortfolioHeader :portfolio="portfolio" />
 
+      <section v-if="portfolio.formacoesAcademicas.length" class="section">
+        <h2>Formação acadêmica</h2>
+        <div v-for="formacao in portfolio.formacoesAcademicas" :key="formacao.id" class="card experiencia-item">
+          <div class="experiencia-head">
+            <strong>{{ formacao.curso }}</strong>
+            <span class="muted">{{ formacao.instituicao }}</span>
+            <span class="muted periodo">{{ formatarData(formacao.dataInicio) }} — {{ formatarData(formacao.dataFim) }}</span>
+          </div>
+          <p v-if="formacao.descricao" class="descricao">{{ formacao.descricao }}</p>
+        </div>
+      </section>
+
       <section v-if="portfolio.experiencias.length" class="section">
         <h2>Experiência profissional</h2>
         <div v-for="exp in portfolio.experiencias" :key="exp.id" class="card experiencia-item">

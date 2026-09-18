@@ -49,6 +49,16 @@ interface ExperienciaInput {
   atual: boolean
 }
 
+interface FormacaoAcademicaInput {
+  ordem?: number
+  curso: string
+  instituicao: string
+  descricao: string
+  dataInicio: string
+  dataFim: string | null
+  atual: boolean
+}
+
 interface PortfolioInput {
   username: string
   nome: string
@@ -64,6 +74,7 @@ interface PortfolioInput {
   links: LinkInput[]
   projetos: ProjetoInput[]
   experiencias: ExperienciaInput[]
+  formacoesAcademicas: FormacaoAcademicaInput[]
 }
 
 Deno.serve(async (req) => {
@@ -130,7 +141,7 @@ Deno.serve(async (req) => {
     const portfolioId = portfolio.id as string
 
     const replaceChildren = async (
-      table: 'links' | 'projetos' | 'experiencias',
+      table: 'links' | 'projetos' | 'experiencias' | 'formacoes_academicas',
       rows: Record<string, unknown>[],
     ) => {
       const { error: deleteError } = await client.from(table).delete().eq('portfolio_id', portfolioId)
@@ -172,6 +183,18 @@ Deno.serve(async (req) => {
         data_inicio: e.dataInicio,
         data_fim: e.atual ? null : e.dataFim,
         atual: e.atual,
+      })),
+    )
+
+    await replaceChildren(
+      'formacoes_academicas',
+      (body.formacoesAcademicas ?? []).map((f) => ({
+        curso: f.curso,
+        instituicao: f.instituicao,
+        descricao: f.descricao,
+        data_inicio: f.dataInicio,
+        data_fim: f.atual ? null : f.dataFim,
+        atual: f.atual,
       })),
     )
 

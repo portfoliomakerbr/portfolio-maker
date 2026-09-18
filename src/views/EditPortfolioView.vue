@@ -11,6 +11,7 @@ import SkillsEditor from '../components/portfolio/SkillsEditor.vue'
 import LinksEditor from '../components/portfolio/LinksEditor.vue'
 import ProjetosEditor from '../components/portfolio/ProjetosEditor.vue'
 import ExperienciasEditor from '../components/portfolio/ExperienciasEditor.vue'
+import FormacoesEditor from '../components/portfolio/FormacoesEditor.vue'
 import ImageUploader from '../components/portfolio/ImageUploader.vue'
 
 const router = useRouter()
@@ -55,6 +56,7 @@ onMounted(async () => {
       links: portfolio.value.links,
       projetos: portfolio.value.projetos,
       experiencias: portfolio.value.experiencias,
+      formacoesAcademicas: portfolio.value.formacoesAcademicas,
     })
   } else {
     const draft = loadDraft()
@@ -185,6 +187,10 @@ async function handleCancel() {
 
       <section class="card">
         <ProjetosEditor v-model="form.projetos" />
+      </section>
+
+      <section class="card">
+        <FormacoesEditor v-model="form.formacoesAcademicas" />
       </section>
 
       <section class="card">

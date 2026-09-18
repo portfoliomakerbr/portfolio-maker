@@ -42,6 +42,16 @@ interface PortfolioRow {
     atual: boolean
   }[]
   links: { id: string; nome: string; url: string; ordem: number }[]
+  formacoes_academicas: {
+    id: string
+    ordem: number
+    curso: string
+    instituicao: string
+    descricao: string
+    data_inicio: string
+    data_fim: string | null
+    atual: boolean
+  }[]
 }
 
 function mapRow(row: PortfolioRow): Portfolio {
@@ -90,10 +100,22 @@ function mapRow(row: PortfolioRow): Portfolio {
         dataFim: e.data_fim,
         atual: e.atual,
       })),
+    formacoesAcademicas: [...row.formacoes_academicas]
+      .sort((a, b) => a.ordem - b.ordem)
+      .map((f) => ({
+        id: f.id,
+        ordem: f.ordem,
+        curso: f.curso,
+        instituicao: f.instituicao,
+        descricao: f.descricao,
+        dataInicio: f.data_inicio,
+        dataFim: f.data_fim,
+        atual: f.atual,
+      })),
   }
 }
 
-const SELECT_COLUMNS = '*, projetos(*), experiencias(*), links(*)'
+const SELECT_COLUMNS = '*, projetos(*), experiencias(*), links(*), formacoes_academicas(*)'
 
 /**
  * Busca pública de um portfólio por username (RLS permite leitura para

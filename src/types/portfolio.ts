@@ -29,6 +29,17 @@ export interface Experiencia {
   atual: boolean
 }
 
+export interface FormacaoAcademica {
+  id?: string
+  ordem: number
+  curso: string
+  instituicao: string
+  descricao: string
+  dataInicio: string
+  dataFim: string | null
+  atual: boolean
+}
+
 export interface Portfolio {
   id: string
   userId: string
@@ -46,6 +57,7 @@ export interface Portfolio {
   links: LinkItem[]
   projetos: Projeto[]
   experiencias: Experiencia[]
+  formacoesAcademicas: FormacaoAcademica[]
   createdAt: string
   updatedAt: string
 }
@@ -79,5 +91,6 @@ export function criarPortfolioFormInput(username: string): PortfolioFormInput {
     links: [],
     projetos: [],
     experiencias: [],
+    formacoesAcademicas: [],
   }
 }

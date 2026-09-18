@@ -48,7 +48,7 @@ Vue não tem hooks no sentido do React (funções que só podem rodar dentro de 
 
 ### Schema
 
-Uma tabela `portfolios` (1:1 com `auth.users` via `user_id unique`) e três tabelas filhas (`projetos`, `experiencias`, `links`) com `ON DELETE CASCADE` e `unique(portfolio_id, ordem)`. Essa constraint é **`deferrable initially deferred`**: sem isso, uma reordenação que grava várias linhas em sequência poderia violar a unicidade num estado intermediário. Na prática, a escrita real das listas acontece via delete-and-reinsert dentro da edge function `portfolio-save` (não via updates sequenciais do client), então a constraint deferrable é uma rede de segurança, não o mecanismo principal.
+Uma tabela `portfolios` (1:1 com `auth.users` via `user_id unique`) e quatro tabelas filhas (`projetos`, `experiencias`, `formacoes_academicas`, `links`) com `ON DELETE CASCADE` e `unique(portfolio_id, ordem)`. Essa constraint é **`deferrable initially deferred`**: sem isso, uma reordenação que grava várias linhas em sequência poderia violar a unicidade num estado intermediário. Na prática, a escrita real das listas acontece via delete-and-reinsert dentro da edge function `portfolio-save` (não via updates sequenciais do client), então a constraint deferrable é uma rede de segurança, não o mecanismo principal.
 
 Colunas de imagem guardam `*_url` **e** `*_path` — o `path` é necessário pra apagar/substituir o arquivo antigo no Storage do Supabase (o Cloudinary do backend antigo não precisava disso porque tinha API própria de gestão de assets).
 
@@ -75,12 +75,12 @@ Supabase Auth nativo (`signUp`, `signInWithPassword` via a function `login`, `si
 O design inicial cogitou 4 (`portfolio-save`, `portfolio-get`, `portfolios-list`, `ping`), mas `portfolio-get` e `portfolios-list` foram descartadas: uma leitura pública com
 
 ```ts
-supabase.from('portfolios').select('*, projetos(*), experiencias(*), links(*)').eq('username', username)
+supabase.from('portfolios').select('*, projetos(*), experiencias(*), formacoes_academicas(*), links(*)').eq('username', username)
 ```
 
 já resolve o join em 1 round-trip sob RLS, sem nenhuma lógica de negócio — criar uma function só pra isso seria um hop de rede a mais sem ganho nenhum, o oposto de "backend enxuto". Ficaram as que genuinamente precisam de servidor:
 
-- **`portfolio-save`** (autenticada): identifica o chamador via `supabase.auth.getUser(jwt)`, valida username (formato + lista de rotas reservadas do Vue Router, que o banco não conhece) e unicidade, faz upsert do portfólio e substitui (delete + reinsert) `projetos`/`experiencias`/`links`. Usa um client Supabase autenticado com o **JWT do chamador**, não a service-role key — a RLS continua sendo a linha de defesa real; a function só adiciona validação que a RLS não expressa.
+- **`portfolio-save`** (autenticada): identifica o chamador via `supabase.auth.getUser(jwt)`, valida username (formato + lista de rotas reservadas do Vue Router, que o banco não conhece) e unicidade, faz upsert do portfólio e substitui (delete + reinsert) `projetos`/`experiencias`/`formacoes_academicas`/`links`. Usa um client Supabase autenticado com o **JWT do chamador**, não a service-role key — a RLS continua sendo a linha de defesa real; a function só adiciona validação que a RLS não expressa.
 - **`login`** (pública, `--no-verify-jwt`): ver seção "Bloqueio de login" abaixo.
 - **`ping`** (pública, `--no-verify-jwt`): handler trivial, alvo do workflow de keep-alive.
 
