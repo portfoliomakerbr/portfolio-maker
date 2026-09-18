@@ -1,0 +1,36 @@
+name: Keep Supabase alive
+
+# Projetos gratuitos do Supabase pausam após ~7 dias sem nenhuma requisição
+# de API. Este job pinga a edge function `ping` a cada 2 dias (bem abaixo da
+# janela de 7 dias, com folga pra um run perdido) e ainda commita um
+# timestamp — isso conta como atividade no repositório, o que evita o outro
+# problema real: o GitHub desabilita workflows agendados automaticamente após
+# 60 dias sem nenhum commit no repo. Ver ARCHITECTURE.md para o raciocínio
+# completo.
+on:
+  schedule:
+    - cron: '0 0 */2 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ping Supabase edge function
+        env:
+          PING_URL: ${{ secrets.SUPABASE_PING_URL }}
+        run: curl --fail --silent --show-error "$PING_URL"
+
+      - name: Registrar timestamp (mantém o repositório "ativo")
+        run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > last-ping.txt
+          git config user.name "keep-alive-bot"
+          git config user.email "actions@github.com"
+          git add last-ping.txt
+          git diff --cached --quiet || git commit -m "chore: keep-alive ping $(date -u +%Y-%m-%d)"
+          git push

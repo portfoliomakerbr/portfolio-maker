@@ -1,0 +1,23 @@
+project_id = "portfolio-maker-vue-supabase"
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/reset-password"]
+
+[storage]
+enabled = true
+
+[edge_runtime]
+enabled = true

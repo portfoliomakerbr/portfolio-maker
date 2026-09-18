@@ -1,0 +1,14 @@
+<template>
+  <footer class="footer">
+    <p class="muted">PortfolioMaker · Vue 3 + Supabase</p>
+  </footer>
+</template>
+
+<style scoped>
+.footer {
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+  font-size: 0.85rem;
+}
+</style>
