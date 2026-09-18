@@ -7,6 +7,8 @@
 ```
 src/
 ├── lib/supabase.ts          # instância única do client Supabase
+├── lib/icons.ts              # ícones de tecnologia e de link, ambos via skillicons.dev
+├── lib/emailjs.ts             # envio do formulário de contato
 ├── types/portfolio.ts       # Portfolio, Projeto, Experiencia, LinkItem
 ├── composables/              # ver seção "Composables" abaixo
 ├── components/
@@ -35,13 +37,15 @@ Vue não tem hooks no sentido do React (funções que só podem rodar dentro de 
 | [`useAuth.ts`](./src/composables/useAuth.ts) | `provide`/`inject`, `onMounted`/`onUnmounted` | Sessão global. `provideAuth()` roda **uma vez** em `App.vue` e assina `onAuthStateChange` uma única vez; qualquer componente pega a sessão via `inject` (`useAuth()`) sem re-assinar o listener. |
 | [`LoginView.vue`](./src/views/LoginView.vue) | `computed`, `setInterval`/`onUnmounted` | Contagem regressiva do bloqueio temporário — `lockedForSeconds` decrementa a cada segundo e `lockedMinutesLabel` (computed) formata `MM:SS`; o timer é limpo em `onUnmounted` pra não vazar entre navegações. |
 | [`usePortfolio.ts`](./src/composables/usePortfolio.ts) | `ref`, `computed` | Busca pública por username; `isOwnPortfolio` é `computed` a partir do `user_id` do portfólio carregado vs. o usuário logado (injetado de `useAuth`), pra decidir se mostra o botão "Editar". |
-| [`usePortfolioForm.ts`](./src/composables/usePortfolioForm.ts) | `reactive`, **`computed` writable** | O formulário inteiro é um `reactive()` (lido/gravado como unidade). `habilidadesText` é um computed com `get`/`set`: a UI edita skills como texto livre separado por vírgula, mas o modelo real é `string[]` — o `set` faz o parse/trim/dedupe na volta. |
+| [`usePortfolioForm.ts`](./src/composables/usePortfolioForm.ts) | `reactive` | O formulário inteiro é um `reactive()` (lido/gravado como unidade) enviado de uma vez pra `portfolio-save`. |
+| [`TagInput.vue`](./src/components/ui/TagInput.vue) | `defineModel<string[]>`, evento de teclado | Editor de habilidades/tecnologias: Enter adiciona a tag digitada, Backspace com o campo vazio remove a última. Existia uma versão anterior baseada em texto livre separado por vírgula (uma `computed` com `get`/`set` fazendo o parse) que **quebrava a digitação**: como o `get` reconstruía o texto a partir do array já filtrado, uma vírgula ou espaço recém-digitado no fim era apagado a cada tecla, fazendo o cursor saltar. `TagInput` resolve isso comitando uma tag por vez em vez de reparsear uma string a cada keystroke. |
 | [`useOrdenableList.ts`](./src/composables/useOrdenableList.ts) | composable genérico reutilizável | Mover item ↑/↓ e renumerar `ordem` — mesma regra usada por `ProjetosEditor` e `ExperienciasEditor`, extraída uma vez em vez de duplicada. |
-| [`useImageUpload.ts`](./src/composables/useImageUpload.ts) | `watch` (dependência **explícita**) | Ao trocar a foto/banner, o callback precisa do *path anterior* (pra apagar o arquivo velho do Storage) — isso vem naturalmente do parâmetro de `watch(selectedFile, (file) => ...)`. Contraste direto com `useDraft` abaixo. |
+| [`useImageUpload.ts`](./src/composables/useImageUpload.ts) | `watch` (dependência **explícita**) | Ao trocar a foto de perfil, o callback precisa do *path anterior* (pra apagar o arquivo velho do Storage) — isso vem naturalmente do parâmetro de `watch(selectedFile, (file) => ...)`. Contraste direto com `useDraft` abaixo. |
 | [`useDraft.ts`](./src/composables/useDraft.ts) | `watchEffect` (dependências **implícitas**) | Autosave do formulário de edição em `localStorage`. Aqui não importa *qual* campo mudou, só que *algo* mudou — é o caso de uso onde `watchEffect` (rastreamento automático) é mais direto que `watch` (que exigiria listar cada campo). |
 | [`useConfirmDialog.ts`](./src/composables/useConfirmDialog.ts) + [`ModalTeleport.vue`](./src/components/ui/ModalTeleport.vue) | `Teleport` | Diálogo de confirmação ("Remover este projeto?"). Os cards de edição usam `overflow: hidden` pra recortar preview de imagem — um modal renderizado *dentro* deles ficaria cortado, então `Teleport to="body"` tira o modal desse fluxo DOM mantendo a reatividade do componente que o abriu. |
 | [`ImageUploader.vue`](./src/components/portfolio/ImageUploader.vue) | template ref + `defineExpose` | `useTemplateRef` no `<input type="file">` escondido, pra disparar o seletor de arquivo a partir de um botão estilizado (`fileInput.value?.click()`). `defineExpose({ reset })` deixa o formulário pai limpar o uploader após salvar, sem precisar de mais um par prop/emit pra um estado puramente imperativo. |
-| [`ProjetoCard.vue`](./src/components/portfolio/ProjetoCard.vue), [`ExperienciaCard.vue`](./src/components/portfolio/ExperienciaCard.vue), [`SkillsEditor.vue`](./src/components/portfolio/SkillsEditor.vue), [`LinksEditor.vue`](./src/components/portfolio/LinksEditor.vue) | `defineModel()` | Two-way binding de cada linha editável de volta pro array no componente pai — `defineModel()` (Vue 3.4+) substitui o par manual `props.modelValue` + `emit('update:modelValue')`. |
+| [`ProjetoCard.vue`](./src/components/portfolio/ProjetoCard.vue), [`ExperienciaCard.vue`](./src/components/portfolio/ExperienciaCard.vue), [`SkillsEditor.vue`](./src/components/portfolio/SkillsEditor.vue) | `defineModel()` | Two-way binding de cada linha editável de volta pro array no componente pai — `defineModel()` (Vue 3.4+) substitui o par manual `props.modelValue` + `emit('update:modelValue')`. |
+| [`ContatoEditor.vue`](./src/components/portfolio/ContatoEditor.vue) | **`computed` writable** + `defineModel` nomeado (`'email'`, `'links'`) | LinkedIn e GitHub têm campo próprio na UI, mas continuam sendo um `LinkItem` normal (nome fixo) dentro do mesmo array `links` — sem coluna dedicada no banco. O computed com `get`/`set` faz essa ponte: ler procura o item pelo nome, escrever cria/atualiza/remove o item conforme o campo fica vazio ou não. |
 | Guarda de rota em [`EditPortfolioView.vue`](./src/views/EditPortfolioView.vue) | `nextTick()` | Quando o `portfolio-save` rejeita por username inválido/duplicado, o código espera `nextTick()` antes de focar e rolar até o campo — garante que o DOM já reflete a mensagem de erro (que muda o layout) antes de calcular a posição do scroll. |
 
 ## Backend (Supabase)
@@ -50,7 +54,7 @@ Vue não tem hooks no sentido do React (funções que só podem rodar dentro de 
 
 Uma tabela `portfolios` (1:1 com `auth.users` via `user_id unique`) e quatro tabelas filhas (`projetos`, `experiencias`, `formacoes_academicas`, `links`) com `ON DELETE CASCADE` e `unique(portfolio_id, ordem)`. Essa constraint é **`deferrable initially deferred`**: sem isso, uma reordenação que grava várias linhas em sequência poderia violar a unicidade num estado intermediário. Na prática, a escrita real das listas acontece via delete-and-reinsert dentro da edge function `portfolio-save` (não via updates sequenciais do client), então a constraint deferrable é uma rede de segurança, não o mecanismo principal.
 
-Colunas de imagem guardam `*_url` **e** `*_path` — o `path` é necessário pra apagar/substituir o arquivo antigo no Storage do Supabase (o Cloudinary do backend antigo não precisava disso porque tinha API própria de gestão de assets).
+A coluna de foto guarda `foto_url` **e** `foto_path` — o `path` é necessário pra apagar/substituir o arquivo antigo no Storage do Supabase (o Cloudinary do backend antigo não precisava disso porque tinha API própria de gestão de assets). Não existe mais imagem de fundo/banner: a primeira versão tinha isso, mas o layout com avatar sobrepondo o banner (`margin-bottom` negativo) fazia o nome do usuário visualmente cortar o banner em nomes mais longos — em vez de ajustar CSS pra um recurso de valor duvidoso, a funcionalidade foi removida (colunas `background_url`/`background_path` derrubadas em `20250101000400_drop_background.sql`) e o cabeçalho do portfólio foi redesenhado sem banner.
 
 Ver [`supabase/migrations/20250101000000_init_schema.sql`](./supabase/migrations/20250101000000_init_schema.sql).
 
@@ -95,6 +99,24 @@ O Supabase Auth não tem "N tentativas erradas → bloqueia por X minutos" nativ
 - A senha em si continua sendo validada pelo Supabase Auth (`auth.signInWithPassword`, com a anon key) — a function só decide *se* deixa tentar, nunca reimplementa verificação de senha.
 - Em caso de sucesso, a function devolve `access_token`/`refresh_token` e o frontend aplica a sessão via `supabase.auth.setSession(...)` (`useAuth.ts`).
 
+## Ícones de tecnologia e de link
+
+`src/lib/icons.ts` centraliza os dois mapeamentos:
+
+- **Tecnologias/habilidades** (`skillIconUrl`): [skillicons.dev](https://skillicons.dev), a mesma API pública usada no PortfolioMaker antigo (Angular) — `https://skillicons.dev/icons?i=<slug>`, sem chave. `SKILL_SLUGS` é a lista de slugs conhecidos (portada de `languages.ts` do projeto Angular), usada tanto pra decidir se um ícone existe (`isKnownSkill`) quanto como sugestões de autocomplete (`<datalist>`) no `TagInput`.
+- **Links** (`linkIconUrl`): também via skillicons.dev, com `theme=light` (parâmetro nativo da API) pra inverter ícones que são pretos por padrão — github, x/twitter, tiktok — pra branco, legível no fundo escuro do app. A primeira versão usava [Simple Icons](https://simpleicons.org) (`cdn.simpleicons.org`), mas o slug `linkedin` retorna 404 lá (a LinkedIn pediu a remoção do próprio ícone da biblioteca por questão de marca) — unificar tudo em skillicons.dev resolveu isso e ainda tirou uma dependência de uma segunda API externa.
+
+Tags/links sem correspondência conhecida simplesmente não ganham ícone (só o texto), tanto na edição quanto na exibição pública — nunca é um erro, é texto livre por natureza.
+
+## Formulário de contato (EmailJS)
+
+O botão "Entre em contato" da página pública ([`ContactSection.vue`](./src/components/portfolio/ContactSection.vue)) resolve dois casos de uso que o app antigo não tinha:
+
+1. **Copiar e-mail/links** — cartões com botão de copiar (`navigator.clipboard`), pra quem só quer o contato direto sem abrir um cliente de e-mail.
+2. **Mandar mensagem sem expor o e-mail publicamente** — formulário (nome, e-mail, mensagem) enviado via [EmailJS](https://www.emailjs.com) (`src/lib/emailjs.ts`), que despacha o e-mail **direto do navegador do visitante**, sem backend próprio.
+
+O destinatário (`to_email`) é dinâmico — vai o `emailPublico` do portfólio sendo visto, não um endereço fixo — porque o template do EmailJS foi montado com um campo `{{to_email}}` de propósito (isso depende de como o template é configurado no painel; nem todo template permite destinatário dinâmico). `reply_to` é setado com o e-mail do visitante, então o dono consegue responder normalmente. Os nomes dos campos enviados (`title`, `name`, `time`, `message`, `to_email`, `email`) precisam bater exatamente com as variáveis usadas dentro do template — são específicos do template configurado, não um contrato fixo do EmailJS. Sem as variáveis `VITE_EMAILJS_*` configuradas, o formulário aparece mas mostra "não configurado" em vez de quebrar (`isContactFormConfigured`).
+
 ## Auto-ping
 
 Projetos gratuitos do Supabase pausam após ~7 dias sem nenhuma requisição de API. A estratégia, em [`.github/workflows/keep-alive.yml`](./.github/workflows/keep-alive.yml):
@@ -107,4 +129,11 @@ Esse commit existe por causa de uma pegadinha real do GitHub Actions: **workflow
 
 ## Fluxo de salvamento
 
-`EditPortfolioView.vue` mantém **um único formulário** (`usePortfolioForm`) cobrindo identidade, skills, imagens, links, projetos e experiências, com **um botão salvar** que chama `portfolio-save` uma vez com o payload inteiro — espelhando a semântica de upsert único que o backend antigo também tinha (`POST /portfolios/save` recebia o documento completo). Evita bugs de salvamento parcial que uma tela dividida em sub-rotas por seção introduziria.
+`EditPortfolioView.vue` mantém **um único formulário** (`usePortfolioForm`) cobrindo identidade, skills, foto, links, projetos, formação acadêmica e experiências, com **um botão salvar** (desabilitado quando não há nada para salvar — mesmo `isDirty` usado pelo botão "Cancelar alterações") que chama `portfolio-save` uma vez com o payload inteiro — espelhando a semântica de upsert único que o backend antigo também tinha (`POST /portfolios/save` recebia o documento completo). Evita bugs de salvamento parcial que uma tela dividida em sub-rotas por seção introduziria.
+
+## Download em PDF/Word
+
+O botão "Baixar" ([`DownloadMenu.vue`](./src/components/portfolio/DownloadMenu.vue)) substitui a abordagem anterior (`window.print()`, que só abre o diálogo de impressão do navegador — o usuário ainda precisava escolher "Salvar como PDF" manualmente). Agora os dois formatos são gerados de verdade a partir dos **dados do portfólio**, não de uma captura da tela:
+
+- **PDF** ([`exportPortfolioPdf`](./src/lib/exportPortfolio.ts)): usa [jsPDF](https://github.com/parallax/jsPDF) desenhando texto diretamente (`doc.text`), não `html2canvas` (captura de tela como imagem) — o resultado é texto selecionável, arquivo pequeno, e sempre em fundo claro/legível independente do tema escuro do site. `jsPDF` é importado dinamicamente (`await import('jspdf')`) dentro da função, não no topo do arquivo: é uma lib pesada usada só nesse botão, então fica num chunk separado carregado sob demanda — isso também contornou um bug real de falta de memória do bundler (Rolldown, usado pelo Vite 8) ao tentar processar o pacote junto com o resto do app num import estático.
+- **Word** ([`exportPortfolioWord`](./src/lib/exportPortfolio.ts)): sem biblioteca nenhuma — gera uma string HTML com a declaração de namespace `xmlns:w="urn:schemas-microsoft-com:office:word"` e baixa como Blob com MIME `application/msword` e extensão `.doc`. É o truque padrão pra produzir um arquivo que o Word abre normalmente com formatação básica, sem precisar de uma lib de geração de `.docx` real (que seria bem mais pesada pro ganho).

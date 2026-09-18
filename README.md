@@ -10,10 +10,12 @@ Repositório: [github.com/portfoliomakerbr/portfolio-maker](https://github.com/p
 
 * **Visualizar portfólios públicos** — navegar pela galeria e acessar portfólios através do username.
 * **Consultar perfil profissional** — visualizar informações pessoais, skills, links, experiências profissionais e projetos.
-* **Exportar portfólio em PDF** — gerar uma versão para impressão diretamente pelo navegador.
+* **Baixar o portfólio** — botão "Baixar" na página pública gera um arquivo de verdade em PDF ou Word, pronto pra anexar num currículo.
 * **Criar e gerenciar conta** — cadastro, login (com e-mail/senha ou com Google) e recuperação de senha utilizando o Supabase Auth.
 * **Proteção contra força bruta no login** — depois de tentativas erradas seguidas, a conta é bloqueada temporariamente; a tela mostra quantas tentativas restam e, se bloqueada, quanto tempo falta.
-* **Criar e editar portfólio** — cadastrar nome, descrição, localização, foto de perfil e imagem de fundo.
+* **Criar e editar portfólio** — cadastrar nome, descrição, localização e foto de perfil.
+* **Ícones automáticos** — habilidades, tecnologias dos projetos e links reconhecidos (java, vue, postgres, linkedin, github...) ganham ícone sozinhos.
+* **Entrar em contato** — visitantes podem copiar seu e-mail/links ou mandar uma mensagem direto pra sua caixa de entrada, sem expor seu e-mail publicamente num formulário de terceiros.
 * **Gerenciar informações profissionais** — adicionar e reordenar skills, links, formação acadêmica, experiências profissionais e projetos.
 * **Publicar portfólio personalizado** — cada usuário possui um único portfólio identificado por um `username` exclusivo, utilizado na URL pública.
 
@@ -80,7 +82,24 @@ supabase functions deploy login --no-verify-jwt
 
 O mailer padrão do Supabase é limitado (poucos e-mails por hora, sem garantia de entrega). Para produção, configure um provedor de SMTP próprio (ex.: [Resend](https://resend.com)) em **Authentication → Emails → SMTP Settings**: host, porta, usuário e senha (API key) do provedor, e um remetente verificado no seu domínio.
 
-### 6. Frontend
+### 6. Formulário de contato (opcional)
+
+O botão "Entre em contato" da página pública manda a mensagem direto pro e-mail do dono do portfólio via [EmailJS](https://www.emailjs.com) — sem backend próprio pra isso, tudo do navegador do visitante.
+
+1. Crie uma conta gratuita em emailjs.com.
+2. **Email Services** → adicione seu provedor (Gmail, Outlook, SMTP próprio...).
+3. **Email Templates** → crie um template com as variáveis `{{from_name}}`, `{{from_email}}`, `{{message}}`, `{{portfolio_owner}}`, `{{portfolio_username}}` (o destinatário fica fixo na config do serviço/template — é assim que o EmailJS evita abuso).
+4. **Account → General** → copie a Public Key.
+5. Preencha em `.env.local`:
+   ```
+   VITE_EMAILJS_SERVICE_ID=service_xxxxxxx
+   VITE_EMAILJS_TEMPLATE_ID=template_xxxxxxx
+   VITE_EMAILJS_PUBLIC_KEY=xxxxxxxxxxxxxxxx
+   ```
+
+Sem essas variáveis, o formulário aparece na página mas mostra "não configurado" em vez de quebrar.
+
+### 7. Frontend
 
 Instale as dependências e inicie o ambiente de desenvolvimento:
 
@@ -95,7 +114,7 @@ A aplicação estará disponível em:
 http://localhost:5173
 ```
 
-### 7. Auto-ping (opcional)
+### 8. Auto-ping (opcional)
 
 O workflow `.github/workflows/keep-alive.yml` pode ser utilizado para evitar que o projeto Supabase gratuito seja pausado por inatividade.
 

@@ -168,6 +168,10 @@ textarea.input:focus {
   gap: var(--space-5);
 }
 
+@page {
+  margin: 14mm 12mm;
+}
+
 @media print {
   .no-print {
     display: none !important;
@@ -178,5 +182,15 @@ textarea.input:focus {
   .page {
     max-width: none;
     padding: 0;
+  }
+  /* Sem isso, o navegador quebra a página no meio de qualquer card que não
+     caiba inteiro no espaço restante da folha — cortando um projeto ou uma
+     experiência ao meio de forma feia. break-inside: avoid pede pro
+     navegador levar o bloco inteiro pra próxima página em vez de dividi-lo
+     (page-break-inside é o nome antigo da mesma propriedade, mantido para
+     navegadores mais velhos que não reconhecem break-inside). */
+  .card {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }

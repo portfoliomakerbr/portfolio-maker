@@ -8,7 +8,7 @@ import { useConfirmDialog } from '../composables/useConfirmDialog'
 import { isUsernameValida } from '../types/reservedUsernames'
 import type { PortfolioFormInput } from '../types/portfolio'
 import SkillsEditor from '../components/portfolio/SkillsEditor.vue'
-import LinksEditor from '../components/portfolio/LinksEditor.vue'
+import ContatoEditor from '../components/portfolio/ContatoEditor.vue'
 import ProjetosEditor from '../components/portfolio/ProjetosEditor.vue'
 import ExperienciasEditor from '../components/portfolio/ExperienciasEditor.vue'
 import FormacoesEditor from '../components/portfolio/FormacoesEditor.vue'
@@ -16,7 +16,7 @@ import ImageUploader from '../components/portfolio/ImageUploader.vue'
 
 const router = useRouter()
 const { portfolio, loading, fetchOwn } = usePortfolio()
-const { form, habilidadesText, saving, saveError, loadFrom, save } = usePortfolioForm('')
+const { form, saving, saveError, loadFrom, save } = usePortfolioForm('')
 const { loadDraft, clearDraft, restored } = useDraft('portfolio-edit-draft', () => form)
 const { confirm } = useConfirmDialog()
 
@@ -50,8 +50,6 @@ onMounted(async () => {
       emailPublico: portfolio.value.emailPublico,
       fotoUrl: portfolio.value.fotoUrl,
       fotoPath: portfolio.value.fotoPath,
-      backgroundUrl: portfolio.value.backgroundUrl,
-      backgroundPath: portfolio.value.backgroundPath,
       habilidades: portfolio.value.habilidades,
       links: portfolio.value.links,
       projetos: portfolio.value.projetos,
@@ -68,11 +66,6 @@ onMounted(async () => {
 function onFotoUploaded(result: { url: string; path: string }) {
   form.fotoUrl = result.url
   form.fotoPath = result.path
-}
-
-function onBackgroundUploaded(result: { url: string; path: string }) {
-  form.backgroundUrl = result.url
-  form.backgroundPath = result.path
 }
 
 async function handleSave() {
@@ -99,7 +92,13 @@ async function handleSave() {
 }
 
 async function handleCancel() {
-  if (!isDirty.value) return
+  if (!isDirty.value) {
+    // Nada pra cancelar: o botão não fica desabilitado nesse caso, só muda
+    // de função — vira um jeito rápido de sair da edição e ver como o
+    // portfólio está publicado, sem exigir um "tem certeza?" pra nada.
+    router.push(portfolio.value ? `/${portfolio.value.username}` : '/')
+    return
+  }
 
   const ok = await confirm('Você quer cancelar mesmo? As alterações feitas agora serão perdidas.', 'Cancelar alterações')
   if (!ok) return
@@ -155,34 +154,20 @@ async function handleCancel() {
           <textarea v-model="form.descricao" class="input" rows="4" />
         </div>
 
-        <div class="field">
-          <label>E-mail público</label>
-          <input v-model="form.emailPublico" class="input" type="email" />
-        </div>
+        <SkillsEditor v-model="form.habilidades" />
 
-        <SkillsEditor v-model="habilidadesText" />
-
-        <div class="grid-2">
-          <ImageUploader
-            label="Foto de perfil"
-            :current-url="form.fotoUrl"
-            :current-path="form.fotoPath"
-            folder="foto"
-            @uploaded="onFotoUploaded"
-          />
-          <ImageUploader
-            label="Imagem de fundo"
-            :current-url="form.backgroundUrl"
-            :current-path="form.backgroundPath"
-            folder="background"
-            @uploaded="onBackgroundUploaded"
-          />
-        </div>
+        <ImageUploader
+          label="Foto de perfil"
+          :current-url="form.fotoUrl"
+          :current-path="form.fotoPath"
+          folder="foto"
+          @uploaded="onFotoUploaded"
+        />
       </section>
 
       <section class="card">
-        <h2>Links</h2>
-        <LinksEditor v-model="form.links" />
+        <h2>Contato</h2>
+        <ContatoEditor v-model:email="form.emailPublico" v-model:links="form.links" />
       </section>
 
       <section class="card">
@@ -202,15 +187,10 @@ async function handleCancel() {
       <div class="action-bar no-print">
         <p v-if="successMessage" class="success-text">{{ successMessage }}</p>
         <div class="action-bar-buttons">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            :disabled="!isDirty"
-            @click="handleCancel"
-          >
-            Cancelar alterações
+          <button type="button" class="btn btn-secondary" @click="handleCancel">
+            {{ isDirty ? 'Cancelar alterações' : 'Voltar ao portfólio' }}
           </button>
-          <button class="btn btn-primary" type="submit" :disabled="saving || !!usernameError">
+          <button class="btn btn-primary" type="submit" :disabled="saving || !!usernameError || !isDirty">
             {{ saving ? 'Salvando...' : 'Salvar portfólio' }}
           </button>
         </div>

@@ -1,14 +1,15 @@
 <script setup lang="ts">
-// v-model liga direto na computed writable `habilidadesText` de usePortfolioForm
-// (string separada por vírgula <-> string[] no modelo de dados real).
-const text = defineModel<string>({ required: true })
+import TagInput from '../ui/TagInput.vue'
+import { SKILL_SLUGS } from '../../lib/icons'
+
+const skills = defineModel<string[]>({ required: true })
 </script>
 
 <template>
   <div class="field">
-    <label>Habilidades (separadas por vírgula)</label>
-    <input v-model="text" class="input" placeholder="java, spring, vue, postgres" />
-    <p class="muted hint">Ex.: java, spring, vue, postgres</p>
+    <label>Habilidades</label>
+    <TagInput v-model="skills" placeholder="digite e pressione Enter" :suggestions="SKILL_SLUGS" />
+    <p class="muted hint">Nomes reconhecidos (java, vue, postgres...) ganham ícone automaticamente.</p>
   </div>
 </template>
 

@@ -1,9 +1,24 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
+import { usePortfolio } from '../../composables/usePortfolio'
 
 const router = useRouter()
 const { isAuthenticated, user, signOut } = useAuth()
+const { portfolio, fetchOwn } = usePortfolio()
+
+// O header é montado uma vez só (fica fora do router-view), então precisa
+// reagir a login/logout pra saber o username do próprio portfólio — não dá
+// pra confiar em onMounted sozinho, já que a sessão resolve de forma
+// assíncrona depois que o header já existe.
+watch(
+  isAuthenticated,
+  (value) => {
+    if (value) fetchOwn()
+  },
+  { immediate: true },
+)
 
 async function handleSignOut() {
   await signOut()
@@ -18,7 +33,7 @@ async function handleSignOut() {
       <nav class="nav">
         <router-link to="/">Galeria</router-link>
         <template v-if="isAuthenticated">
-          <router-link to="/edit">Meu portfólio</router-link>
+          <router-link :to="portfolio ? `/${portfolio.username}` : '/edit'">Meu portfólio</router-link>
           <span v-if="user?.email" class="user-email" :title="user.email">{{ user.email }}</span>
           <button class="btn btn-secondary" @click="handleSignOut">Sair</button>
         </template>

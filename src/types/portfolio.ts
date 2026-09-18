@@ -51,8 +51,6 @@ export interface Portfolio {
   emailPublico: string
   fotoUrl: string | null
   fotoPath: string | null
-  backgroundUrl: string | null
-  backgroundPath: string | null
   habilidades: string[]
   links: LinkItem[]
   projetos: Projeto[]
@@ -85,8 +83,6 @@ export function criarPortfolioFormInput(username: string): PortfolioFormInput {
     emailPublico: '',
     fotoUrl: null,
     fotoPath: null,
-    backgroundUrl: null,
-    backgroundPath: null,
     habilidades: [],
     links: [],
     projetos: [],

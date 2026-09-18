@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import type { Projeto } from '../../types/portfolio'
 import { useConfirmDialog } from '../../composables/useConfirmDialog'
+import TagInput from '../ui/TagInput.vue'
+import { SKILL_SLUGS } from '../../lib/icons'
 
 // defineModel(): two-way binding da linha inteira do projeto de volta pro
 // array no componente pai (ProjetosEditor) — o v-model aqui evita ter que
@@ -17,21 +18,6 @@ async function handleRemove() {
   const ok = await confirm(`Remover o projeto "${projeto.value.nome || 'sem nome'}"?`, 'Remover projeto')
   if (ok) emit('remove')
 }
-
-// Texto do campo vive num ref próprio, separado do array `tecnologias`.
-// Reconstruir o texto a partir do array filtrado a cada tecla (como era
-// antes) apaga vírgulas/espaços recém-digitados assim que o segmento fica
-// vazio, fazendo o cursor "saltar" e travando a digitação. Aqui o texto só
-// é convertido pro array num watch (mão única: texto -> array), nunca o
-// inverso durante a digitação, então o que a pessoa digita nunca é sobrescrito.
-const tecnologiasTexto = ref(projeto.value.tecnologias.join(', '))
-
-watch(tecnologiasTexto, (value) => {
-  projeto.value.tecnologias = value
-    .split(',')
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean)
-})
 </script>
 
 <template>
@@ -72,8 +58,8 @@ watch(tecnologiasTexto, (value) => {
     </div>
 
     <div class="field">
-      <label>Tecnologias (separadas por vírgula)</label>
-      <input v-model="tecnologiasTexto" class="input" placeholder="vue, typescript, supabase" />
+      <label>Tecnologias</label>
+      <TagInput v-model="projeto.tecnologias" placeholder="digite e pressione Enter" :suggestions="SKILL_SLUGS" />
     </div>
   </div>
 </template>

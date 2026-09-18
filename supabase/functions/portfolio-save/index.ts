@@ -68,8 +68,6 @@ interface PortfolioInput {
   emailPublico: string
   fotoUrl: string | null
   fotoPath: string | null
-  backgroundUrl: string | null
-  backgroundPath: string | null
   habilidades: string[]
   links: LinkInput[]
   projetos: ProjetoInput[]
@@ -123,8 +121,6 @@ Deno.serve(async (req) => {
       email_publico: body.emailPublico ?? '',
       foto_url: body.fotoUrl ?? null,
       foto_path: body.fotoPath ?? null,
-      background_url: body.backgroundUrl ?? null,
-      background_path: body.backgroundPath ?? null,
       habilidades: body.habilidades ?? [],
     }
 
@@ -157,7 +153,9 @@ Deno.serve(async (req) => {
 
     await replaceChildren(
       'links',
-      (body.links ?? []).map((l) => ({ nome: l.nome, url: l.url })),
+      (body.links ?? [])
+        .filter((l) => l.nome.trim() && l.url.trim())
+        .map((l) => ({ nome: l.nome.trim(), url: l.url.trim() })),
     )
 
     await replaceChildren(

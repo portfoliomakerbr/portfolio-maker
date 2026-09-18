@@ -1,19 +1,17 @@
 <script setup lang="ts">
 import type { Portfolio } from '../../types/portfolio'
+import { isKnownSkill, linkIconUrl, skillIconUrl } from '../../lib/icons'
 
 defineProps<{ portfolio: Portfolio }>()
 </script>
 
 <template>
-  <div class="portfolio-header">
-    <div v-if="portfolio.backgroundUrl" class="background" :style="{ backgroundImage: `url(${portfolio.backgroundUrl})` }" />
-    <div class="background background-placeholder" v-else />
-
+  <div class="card portfolio-header">
     <div class="identity">
       <img v-if="portfolio.fotoUrl" :src="portfolio.fotoUrl" :alt="portfolio.nome" class="avatar" />
       <div v-else class="avatar avatar-placeholder">{{ portfolio.nome.charAt(0).toUpperCase() }}</div>
 
-      <div>
+      <div class="identity-text">
         <h1>{{ portfolio.nome }}</h1>
         <p class="muted">{{ portfolio.breveDescricao }}</p>
         <p v-if="portfolio.localizacao" class="muted local">📍 {{ portfolio.localizacao }}</p>
@@ -23,39 +21,42 @@ defineProps<{ portfolio: Portfolio }>()
     <p v-if="portfolio.descricao" class="descricao">{{ portfolio.descricao }}</p>
 
     <div v-if="portfolio.habilidades.length" class="skills">
-      <span v-for="skill in portfolio.habilidades" :key="skill" class="tag">{{ skill }}</span>
+      <span v-for="skill in portfolio.habilidades" :key="skill" class="tag">
+        <img v-if="isKnownSkill(skill)" :src="skillIconUrl(skill)" :alt="skill" class="tag-icon" />
+        {{ skill }}
+      </span>
     </div>
 
     <div v-if="portfolio.links.length" class="links">
-      <a v-for="link in portfolio.links" :key="link.id ?? link.nome" :href="link.url" target="_blank" rel="noopener">
-        {{ link.nome }}
+      <a
+        v-for="link in portfolio.links"
+        :key="link.id ?? link.nome"
+        class="link-chip"
+        :href="link.url"
+        target="_blank"
+        rel="noopener"
+      >
+        <img v-if="linkIconUrl(link.nome)" :src="linkIconUrl(link.nome)!" :alt="link.nome" class="link-icon" />
+        <span class="link-url">{{ link.url }}</span>
       </a>
     </div>
   </div>
 </template>
 
 <style scoped>
-.portfolio-header {
-  position: relative;
-}
-
-.background {
-  height: 160px;
-  border-radius: var(--radius-lg);
-  background-size: cover;
-  background-position: center;
-  margin-bottom: -40px;
-}
-
-.background-placeholder {
-  background: linear-gradient(120deg, var(--color-accent-soft), var(--color-border));
-}
-
 .identity {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--space-4);
-  padding: 0 var(--space-4);
+  flex-wrap: wrap;
+}
+
+.identity-text {
+  min-width: 0;
+}
+
+.identity-text h1 {
+  overflow-wrap: anywhere;
 }
 
 .avatar {
@@ -63,7 +64,8 @@ defineProps<{ portfolio: Portfolio }>()
   height: 96px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid var(--color-bg);
+  border: 3px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .avatar-placeholder {
@@ -81,19 +83,69 @@ defineProps<{ portfolio: Portfolio }>()
 }
 
 .descricao {
-  margin: var(--space-5) var(--space-4) 0;
+  margin: var(--space-5) 0 0;
   white-space: pre-line;
 }
 
-.skills,
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+}
+
+.tag-icon {
+  width: 16px;
+  height: 16px;
+}
+
 .links {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin: var(--space-4) var(--space-4) 0;
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
 }
 
-.links a {
+.link-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
   font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  text-decoration: none;
+}
+
+.link-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.link-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.link-url {
+  min-width: 0;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .identity {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 </style>

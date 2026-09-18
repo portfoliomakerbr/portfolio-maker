@@ -8,13 +8,13 @@ interface UploadResult {
 }
 
 /**
- * Upload de foto/banner para o Storage. Usa watch() (dependência explícita em
- * `selectedFile`), não watchEffect(): o callback precisa do path do arquivo
- * ANTERIOR (para apagá-lo do Storage ao trocar de imagem), e watch() dá acesso
- * a esse valor através do parâmetro do próprio ref observado — não faria
- * sentido reescrever isso com rastreamento implícito de dependências.
+ * Upload de foto de perfil para o Storage. Usa watch() (dependência explícita
+ * em `selectedFile`), não watchEffect(): o callback precisa do path do
+ * arquivo ANTERIOR (para apagá-lo do Storage ao trocar de imagem), e watch()
+ * dá acesso a esse valor através do parâmetro do próprio ref observado — não
+ * faria sentido reescrever isso com rastreamento implícito de dependências.
  */
-export function useImageUpload(previousPath: () => string | null, folder: 'foto' | 'background') {
+export function useImageUpload(previousPath: () => string | null, folder: 'foto') {
   const auth = useAuth()
   const selectedFile = ref<File | null>(null)
   const uploading = ref(false)

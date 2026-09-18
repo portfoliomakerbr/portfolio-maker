@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { supabase } from '../lib/supabase'
 import { criarPortfolioFormInput, type PortfolioFormInput } from '../types/portfolio'
 
@@ -15,25 +15,6 @@ export function usePortfolioForm(username: string) {
   function loadFrom(input: PortfolioFormInput) {
     Object.assign(form, input)
   }
-
-  // Computed writable: a UI edita skills como texto livre separado por vírgula
-  // (melhor UX para digitar tags do que um input por skill), mas o modelo de
-  // dados real é string[]. O get/set aqui faz essa ponte nos dois sentidos.
-  const habilidadesText = computed<string>({
-    get() {
-      return form.habilidades.join(', ')
-    },
-    set(value: string) {
-      form.habilidades = Array.from(
-        new Set(
-          value
-            .split(',')
-            .map((s) => s.trim().toLowerCase())
-            .filter(Boolean),
-        ),
-      )
-    },
-  })
 
   async function save() {
     saving.value = true
@@ -64,5 +45,5 @@ export function usePortfolioForm(username: string) {
     return { error: null, data }
   }
 
-  return { form, habilidadesText, saving, saveError, loadFrom, save }
+  return { form, saving, saveError, loadFrom, save }
 }

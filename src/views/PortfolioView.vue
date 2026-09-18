@@ -2,6 +2,9 @@
 import { onMounted, watch } from 'vue'
 import { usePortfolio } from '../composables/usePortfolio'
 import PortfolioHeader from '../components/portfolio/PortfolioHeader.vue'
+import ContactSection from '../components/portfolio/ContactSection.vue'
+import DownloadMenu from '../components/portfolio/DownloadMenu.vue'
+import { isKnownSkill, skillIconUrl } from '../lib/icons'
 
 const props = defineProps<{ username: string }>()
 const { portfolio, loading, notFound, error, isOwnPortfolio, fetchByUsername } = usePortfolio()
@@ -13,10 +16,6 @@ function formatarData(data: string | null): string {
   if (!data) return 'atual'
   const [ano, mes] = data.split('-')
   return `${mes}/${ano}`
-}
-
-function exportarPdf() {
-  window.print()
 }
 </script>
 
@@ -35,7 +34,7 @@ function exportarPdf() {
     <template v-else-if="portfolio">
       <div class="actions no-print">
         <router-link v-if="isOwnPortfolio" to="/edit" class="btn btn-secondary">Editar portfólio</router-link>
-        <button class="btn btn-secondary" @click="exportarPdf">Exportar PDF</button>
+        <DownloadMenu :portfolio="portfolio" />
       </div>
 
       <PortfolioHeader :portfolio="portfolio" />
@@ -72,7 +71,10 @@ function exportarPdf() {
             <h3>{{ proj.nome }}</h3>
             <p class="muted descricao">{{ proj.descricao }}</p>
             <div class="skills">
-              <span v-for="tec in proj.tecnologias" :key="tec" class="tag">{{ tec }}</span>
+              <span v-for="tec in proj.tecnologias" :key="tec" class="tag">
+                <img v-if="isKnownSkill(tec)" :src="skillIconUrl(tec)" :alt="tec" class="tag-icon" />
+                {{ tec }}
+              </span>
             </div>
             <div class="links-row">
               <a v-if="proj.linkDoProjeto" class="link-btn" :href="proj.linkDoProjeto" target="_blank" rel="noopener">
@@ -88,6 +90,8 @@ function exportarPdf() {
           </div>
         </div>
       </section>
+
+      <ContactSection :portfolio="portfolio" class="section no-print" />
     </template>
   </div>
 </template>
@@ -138,6 +142,11 @@ function exportarPdf() {
   flex-wrap: wrap;
   gap: var(--space-2);
   margin: var(--space-3) 0;
+}
+
+.tag-icon {
+  width: 16px;
+  height: 16px;
 }
 
 /* Separado visualmente das tags de tecnologia (pill, preenchida, cor de

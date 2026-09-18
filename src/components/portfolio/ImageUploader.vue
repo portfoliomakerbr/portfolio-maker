@@ -6,7 +6,7 @@ const props = defineProps<{
   label: string
   currentUrl: string | null
   currentPath: string | null
-  folder: 'foto' | 'background'
+  folder: 'foto'
 }>()
 
 const emit = defineEmits<{ uploaded: [{ url: string; path: string }] }>()

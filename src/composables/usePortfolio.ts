@@ -14,8 +14,6 @@ interface PortfolioRow {
   email_publico: string
   foto_url: string | null
   foto_path: string | null
-  background_url: string | null
-  background_path: string | null
   habilidades: string[]
   created_at: string
   updated_at: string
@@ -66,8 +64,6 @@ function mapRow(row: PortfolioRow): Portfolio {
     emailPublico: row.email_publico,
     fotoUrl: row.foto_url,
     fotoPath: row.foto_path,
-    backgroundUrl: row.background_url,
-    backgroundPath: row.background_path,
     habilidades: row.habilidades ?? [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
