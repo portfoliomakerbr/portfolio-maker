@@ -4,8 +4,6 @@ O **PortfolioMaker** é uma aplicação web para criação, gerenciamento e publ
 
 > Documentação técnica sobre estrutura do código, composables do Vue, schema do banco, Edge Functions e auto-ping: veja **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
 
-Repositório: [github.com/portfoliomakerbr/portfolio-maker](https://github.com/portfoliomakerbr/portfolio-maker)
-
 ## Casos de uso
 
 * **Visualizar portfólios públicos** — navegar pela galeria e acessar portfólios através do username.
