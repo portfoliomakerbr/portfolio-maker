@@ -2,6 +2,8 @@
 
 O **PortfolioMaker** é uma aplicação web para criação, gerenciamento e publicação de portfólios profissionais. O frontend é desenvolvido com **Vue 3** e o backend utiliza **Supabase**, aproveitando **Postgres, Auth, Storage e Edge Functions**, sem a necessidade de um servidor próprio.
 
+Veja em produção em: [https://github.com/portfoliomakerbr/portfolio-maker](https://portfolio-maker.netlify.app/)
+
 > Documentação técnica sobre estrutura do código, composables do Vue, schema do banco, Edge Functions e auto-ping: veja **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
 
 ## Casos de uso
