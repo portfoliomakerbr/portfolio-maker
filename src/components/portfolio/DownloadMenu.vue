@@ -45,7 +45,7 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
       </button>
       <button type="button" class="menu-item" @click="downloadWord">
         <img src="/icons/docx-icon.png" alt="" class="menu-icon" />
-        <span>DOCX</span>
+        <span>DOC</span>
       </button>
     </div>
   </div>

@@ -73,9 +73,7 @@ export async function exportPortfolioPdf(portfolio: Portfolio) {
   doc.text(portfolio.nome, marginX, y)
   y += 22
 
-  const infoLine = [portfolio.breveDescricao, portfolio.localizacao, portfolio.emailPublico]
-    .filter(Boolean)
-    .join('  ·  ')
+  const infoLine = [portfolio.breveDescricao, portfolio.localizacao].filter(Boolean).join('  ·  ')
   paragraph(infoLine, { size: 10.5, color: [110, 110, 118], gap: 14 })
 
   paragraph(portfolio.descricao, { gap: 14 })
@@ -111,7 +109,7 @@ export async function exportPortfolioPdf(portfolio: Portfolio) {
       if (p.tecnologias.length) {
         paragraph(`Tecnologias: ${p.tecnologias.join(', ')}`, { size: 9.5, color: [130, 130, 138], gap: 2 })
       }
-      const links = [p.linkDoProjeto, p.linkDoRepositorio, p.linkYoutube].filter(Boolean).join('   ')
+      const links = p.links.map((l) => `${l.nome}: ${l.url}`).join('   ')
       paragraph(links, { size: 9.5, color: [79, 70, 229], gap: 14 })
     }
   }
@@ -152,12 +150,11 @@ export function exportPortfolioWord(portfolio: Portfolio) {
 
   const projetos = portfolio.projetos
     .map((p) => {
-      const links = [p.linkDoProjeto, p.linkDoRepositorio, p.linkYoutube].filter(Boolean)
       return `
         <h3>${esc(p.nome)}</h3>
         <p>${nl2br(p.descricao)}</p>
         ${p.tecnologias.length ? `<p class="muted">Tecnologias: ${esc(p.tecnologias.join(', '))}</p>` : ''}
-        ${links.length ? `<p>${links.map((l) => `<a href="${esc(l)}">${esc(l)}</a>`).join('<br>')}</p>` : ''}`
+        ${p.links.length ? `<p>${p.links.map((l) => `<a href="${esc(l.url)}">${esc(l.nome)}</a>`).join('<br>')}</p>` : ''}`
     })
     .join('')
 
@@ -181,7 +178,7 @@ export function exportPortfolioWord(portfolio: Portfolio) {
     </head>
     <body>
       <h1>${esc(portfolio.nome)}</h1>
-      <p class="muted">${[portfolio.breveDescricao, portfolio.localizacao, portfolio.emailPublico].filter(Boolean).map(esc).join(' &middot; ')}</p>
+      <p class="muted">${[portfolio.breveDescricao, portfolio.localizacao].filter(Boolean).map(esc).join(' &middot; ')}</p>
       <p>${nl2br(portfolio.descricao)}</p>
       ${portfolio.habilidades.length ? `<h2>Habilidades</h2><p>${esc(portfolio.habilidades.join(', '))}</p>` : ''}
       ${formacoes ? `<h2>Formação acadêmica</h2>${formacoes}` : ''}
@@ -191,6 +188,10 @@ export function exportPortfolioWord(portfolio: Portfolio) {
     </body>
     </html>`
 
+  // Extensão .doc, não .docx: o conteúdo é HTML disfarçado (via xmlns:w e o
+  // mimetype application/msword), truque que só funciona com a extensão
+  // antiga — o Word trata .docx como um zip OOXML de verdade e acusa
+  // "conteúdo ilegível" ao abrir HTML puro com essa extensão.
   const blob = new Blob(['﻿', html], { type: 'application/msword' })
-  downloadBlob(blob, `portfolio-${portfolio.username}.docx`)
+  downloadBlob(blob, `portfolio-${portfolio.username}.doc`)
 }

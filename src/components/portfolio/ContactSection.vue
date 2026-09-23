@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import type { Portfolio } from '../../types/portfolio'
-import { linkIconUrl } from '../../lib/icons'
+import { faviconUrl } from '../../lib/icons'
 import { isContactFormConfigured, sendContactMessage } from '../../lib/emailjs'
 
 const props = defineProps<{ portfolio: Portfolio }>()
@@ -38,7 +38,7 @@ async function handleSubmit() {
       fromEmail: form.email,
       message: form.mensagem,
       portfolioOwnerName: props.portfolio.nome,
-      portfolioOwnerEmail: props.portfolio.emailPublico,
+      portfolioOwnerEmail: props.portfolio.emailContato,
       portfolioUsername: props.portfolio.username,
     })
     sent.value = true
@@ -57,30 +57,21 @@ async function handleSubmit() {
   <section class="section">
     <h2>Entre em contato</h2>
 
-    <div class="contact-grid">
-      <div class="contact-cards">
-        <div v-if="portfolio.emailPublico" class="card contact-card">
-          <div class="contact-card-info">
-            <img :src="linkIconUrl('email')!" alt="" class="contact-icon" />
-            <strong class="contact-link">{{ portfolio.emailPublico }}</strong>
-          </div>
-          <button type="button" class="btn btn-icon" @click="copy('email', portfolio.emailPublico)">
-            {{ copiedKey === 'email' ? '✓' : '📋' }}
-          </button>
-        </div>
-
+    <div class="contact-grid" :class="{ 'single-column': !portfolio.links.length || !portfolio.emailContato }">
+      <div v-if="portfolio.links.length" class="contact-cards">
         <div v-for="link in portfolio.links" :key="link.id ?? link.nome" class="card contact-card">
           <div class="contact-card-info">
-            <img v-if="linkIconUrl(link.nome)" :src="linkIconUrl(link.nome)!" :alt="link.nome" class="contact-icon" />
+            <img v-if="faviconUrl(link.url)" :src="faviconUrl(link.url)!" :alt="link.nome" class="contact-icon" />
             <a :href="link.url" target="_blank" rel="noopener" class="contact-link">{{ link.url }}</a>
           </div>
+          <span v-if="copiedKey === link.nome" class="copied-label">Copiado!</span>
           <button type="button" class="btn btn-icon" @click="copy(link.nome, link.url)">
             {{ copiedKey === link.nome ? '✓' : '📋' }}
           </button>
         </div>
       </div>
 
-      <form class="card contact-form" @submit.prevent="handleSubmit">
+      <form v-if="portfolio.emailContato" class="card contact-form" @submit.prevent="handleSubmit">
         <template v-if="!isContactFormConfigured">
           <p class="muted">Formulário de mensagens ainda não configurado.</p>
         </template>
@@ -122,6 +113,10 @@ async function handleSubmit() {
   align-items: start;
 }
 
+.contact-grid.single-column {
+  grid-template-columns: 1fr;
+}
+
 .contact-cards {
   display: flex;
   flex-direction: column;
@@ -134,6 +129,20 @@ async function handleSubmit() {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.contact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-accent);
+}
+
+.copied-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-success);
+  white-space: nowrap;
 }
 
 .contact-card-info {

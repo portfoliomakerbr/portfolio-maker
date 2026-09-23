@@ -19,8 +19,15 @@ export function isUsernameReservada(username: string): boolean {
   return RESERVED_USERNAMES.includes(username.toLowerCase())
 }
 
-const USERNAME_REGEX = /^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/
-
-export function isUsernameValida(username: string): boolean {
-  return USERNAME_REGEX.test(username) && !isUsernameReservada(username)
+// Mensagem específica por tipo de problema (tamanho, caractere inválido,
+// hífen nas pontas, reservado) em vez de um "username inválido" genérico que
+// não diz qual das quatro regras foi quebrada.
+export function validateUsername(username: string): string | null {
+  const value = username.trim().toLowerCase()
+  if (value.length < 3) return 'Username muito curto (mínimo 3 caracteres).'
+  if (value.length > 32) return 'Username muito longo (máximo 32 caracteres).'
+  if (!/^[a-z0-9-]+$/.test(value)) return 'Username só pode conter letras, números e hífen.'
+  if (value.startsWith('-') || value.endsWith('-')) return 'Username não pode começar nem terminar com hífen.'
+  if (isUsernameReservada(value)) return 'Esse username já é usado por uma página do site — escolha outro.'
+  return null
 }

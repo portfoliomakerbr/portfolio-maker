@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Portfolio } from '../../types/portfolio'
-import { isKnownSkill, linkIconUrl, skillIconUrl } from '../../lib/icons'
+import { faviconUrl, isKnownSkill, skillIconUrl } from '../../lib/icons'
 
 defineProps<{ portfolio: Portfolio }>()
 </script>
@@ -35,9 +35,10 @@ defineProps<{ portfolio: Portfolio }>()
         :href="link.url"
         target="_blank"
         rel="noopener"
+        :title="link.url"
       >
-        <img v-if="linkIconUrl(link.nome)" :src="linkIconUrl(link.nome)!" :alt="link.nome" class="link-icon" />
-        <span class="link-url">{{ link.url }}</span>
+        <img v-if="faviconUrl(link.url)" :src="faviconUrl(link.url)!" alt="" class="link-icon" />
+        <span class="link-url">{{ link.nome }}</span>
       </a>
     </div>
   </div>

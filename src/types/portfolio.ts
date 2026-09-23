@@ -10,9 +10,7 @@ export interface Projeto {
   ordem: number
   nome: string
   descricao: string
-  linkDoProjeto: string
-  linkDoRepositorio: string
-  linkYoutube: string
+  links: LinkItem[]
   imagemUrl: string | null
   imagemPath: string | null
   tecnologias: string[]
@@ -48,7 +46,10 @@ export interface Portfolio {
   breveDescricao: string
   descricao: string
   localizacao: string
-  emailPublico: string
+  // Não aparece publicamente — só define pra onde vão as mensagens do
+  // formulário de contato. Pode ser diferente do e-mail da conta e de
+  // qualquer e-mail que o usuário decida deixar público como um link comum.
+  emailContato: string
   fotoUrl: string | null
   fotoPath: string | null
   habilidades: string[]
@@ -80,7 +81,7 @@ export function criarPortfolioFormInput(username: string): PortfolioFormInput {
     breveDescricao: '',
     descricao: '',
     localizacao: '',
-    emailPublico: '',
+    emailContato: '',
     fotoUrl: null,
     fotoPath: null,
     habilidades: [],

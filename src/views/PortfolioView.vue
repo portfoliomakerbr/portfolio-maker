@@ -4,7 +4,8 @@ import { usePortfolio } from '../composables/usePortfolio'
 import PortfolioHeader from '../components/portfolio/PortfolioHeader.vue'
 import ContactSection from '../components/portfolio/ContactSection.vue'
 import DownloadMenu from '../components/portfolio/DownloadMenu.vue'
-import { isKnownSkill, skillIconUrl } from '../lib/icons'
+import FloatingToolbar from '../components/layout/FloatingToolbar.vue'
+import { faviconUrl, isKnownSkill, skillIconUrl } from '../lib/icons'
 
 const props = defineProps<{ username: string }>()
 const { portfolio, loading, notFound, error, isOwnPortfolio, fetchByUsername } = usePortfolio()
@@ -32,10 +33,10 @@ function formatarData(data: string | null): string {
     <p v-else-if="error" class="error-text">{{ error }}</p>
 
     <template v-else-if="portfolio">
-      <div class="actions no-print">
+      <FloatingToolbar>
         <router-link v-if="isOwnPortfolio" to="/edit" class="btn btn-secondary">Editar portfólio</router-link>
         <DownloadMenu :portfolio="portfolio" />
-      </div>
+      </FloatingToolbar>
 
       <PortfolioHeader :portfolio="portfolio" />
 
@@ -76,36 +77,47 @@ function formatarData(data: string | null): string {
                 {{ tec }}
               </span>
             </div>
-            <div class="links-row">
-              <a v-if="proj.linkDoProjeto" class="link-btn" :href="proj.linkDoProjeto" target="_blank" rel="noopener">
-                🌐 Ver projeto
-              </a>
-              <a v-if="proj.linkDoRepositorio" class="link-btn" :href="proj.linkDoRepositorio" target="_blank" rel="noopener">
-                📦 Repositório
-              </a>
-              <a v-if="proj.linkYoutube" class="link-btn" :href="proj.linkYoutube" target="_blank" rel="noopener">
-                ▶️ YouTube
+            <div v-if="proj.links.length" class="links-row">
+              <a
+                v-for="link in proj.links"
+                :key="link.id ?? link.nome"
+                class="link-btn"
+                :href="link.url"
+                target="_blank"
+                rel="noopener"
+              >
+                <img v-if="faviconUrl(link.url)" :src="faviconUrl(link.url)!" alt="" class="link-btn-icon" />
+                {{ link.nome }}
               </a>
             </div>
           </div>
         </div>
       </section>
 
-      <ContactSection :portfolio="portfolio" class="section no-print" />
+      <ContactSection
+        v-if="portfolio.links.length || portfolio.emailContato"
+        :portfolio="portfolio"
+        class="section no-print"
+      />
     </template>
   </div>
 </template>
 
 <style scoped>
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-
 .section {
   margin-top: var(--space-8);
+}
+
+.experiencia-item,
+.projeto-item {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.experiencia-item:hover,
+.projeto-item:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-accent);
 }
 
 .experiencia-item {
@@ -147,6 +159,11 @@ function formatarData(data: string | null): string {
 .tag-icon {
   width: 16px;
   height: 16px;
+}
+
+.link-btn-icon {
+  width: 14px;
+  height: 14px;
 }
 
 /* Separado visualmente das tags de tecnologia (pill, preenchida, cor de

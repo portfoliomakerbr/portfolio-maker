@@ -11,7 +11,7 @@ interface PortfolioRow {
   breve_descricao: string
   descricao: string
   localizacao: string
-  email_publico: string
+  email_contato: string
   foto_url: string | null
   foto_path: string | null
   habilidades: string[]
@@ -22,12 +22,10 @@ interface PortfolioRow {
     ordem: number
     nome: string
     descricao: string
-    link_do_projeto: string
-    link_do_repositorio: string
-    link_youtube: string
     imagem_url: string | null
     imagem_path: string | null
     tecnologias: string[]
+    links: { id: string; nome: string; url: string; ordem: number }[]
   }[]
   experiencias: {
     id: string
@@ -61,7 +59,7 @@ function mapRow(row: PortfolioRow): Portfolio {
     breveDescricao: row.breve_descricao,
     descricao: row.descricao,
     localizacao: row.localizacao,
-    emailPublico: row.email_publico,
+    emailContato: row.email_contato,
     fotoUrl: row.foto_url,
     fotoPath: row.foto_path,
     habilidades: row.habilidades ?? [],
@@ -77,12 +75,12 @@ function mapRow(row: PortfolioRow): Portfolio {
         ordem: p.ordem,
         nome: p.nome,
         descricao: p.descricao,
-        linkDoProjeto: p.link_do_projeto,
-        linkDoRepositorio: p.link_do_repositorio,
-        linkYoutube: p.link_youtube,
         imagemUrl: p.imagem_url,
         imagemPath: p.imagem_path,
         tecnologias: p.tecnologias ?? [],
+        links: [...(p.links ?? [])]
+          .sort((a, b) => a.ordem - b.ordem)
+          .map((l) => ({ id: l.id, nome: l.nome, url: l.url, ordem: l.ordem })),
       })),
     experiencias: [...row.experiencias]
       .sort((a, b) => a.ordem - b.ordem)
@@ -111,7 +109,7 @@ function mapRow(row: PortfolioRow): Portfolio {
   }
 }
 
-const SELECT_COLUMNS = '*, projetos(*), experiencias(*), links(*), formacoes_academicas(*)'
+const SELECT_COLUMNS = '*, projetos(*, links:projeto_links(*)), experiencias(*), links(*), formacoes_academicas(*)'
 
 /**
  * Busca pública de um portfólio por username (RLS permite leitura para

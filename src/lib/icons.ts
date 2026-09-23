@@ -46,37 +46,16 @@ export function skillIconUrl(slug: string): string {
   return `${SKILL_ICON_BASE}${slug.toLowerCase()}`
 }
 
-// Ícones de link (redes sociais/contato): tentamos primeiro Simple Icons via
-// CDN (cor de marca exata), mas o slug "linkedin" foi removido de lá (pedido
-// de takedown da própria LinkedIn — retorna 404 mesmo sendo um serviço bem
-// conhecido). skillicons.dev também cobre ícones sociais, então unificamos
-// tudo nessa única API — mesma origem já usada pras tecnologias, um problema
-// a menos de CORS/disponibilidade, e o `theme=light` resolve o contraste no
-// fundo escuro pros ícones que são pretos por padrão (github, x, tiktok...).
-const LINK_SLUGS: Record<string, string> = {
-  linkedin: 'linkedin',
-  github: 'github',
-  instagram: 'instagram',
-  youtube: 'youtube',
-  twitter: 'twitter',
-  x: 'twitter',
-  facebook: 'facebook',
-  tiktok: 'tiktok',
-  whatsapp: 'whatsapp',
-  telegram: 'telegram',
-  gmail: 'gmail',
-  email: 'gmail',
-  discord: 'discord',
-  twitch: 'twitch',
-  dribbble: 'dribbble',
-  behance: 'behance',
-  medium: 'medium',
-  devto: 'devto',
-  stackoverflow: 'stackoverflow',
-}
-
-export function linkIconUrl(nome: string): string | null {
-  const slug = LINK_SLUGS[nome.trim().toLowerCase()]
-  if (!slug) return null
-  return skillIconUrl(slug)
+// Ícones de link (contato/projeto): em vez de manter uma lista fixa de
+// plataformas conhecidas (o usuário agora pode cadastrar qualquer link, não
+// só LinkedIn/GitHub/Instagram...), busca o favicon de verdade do site via
+// o serviço público do Google — funciona pra qualquer domínio, sem precisar
+// reconhecer o nome que o usuário digitou.
+export function faviconUrl(url: string, size = 32): string | null {
+  try {
+    const { hostname } = new URL(url)
+    return `https://www.google.com/s2/favicons?sz=${size}&domain=${hostname}`
+  } catch {
+    return null
+  }
 }
