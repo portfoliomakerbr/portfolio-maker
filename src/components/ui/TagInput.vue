@@ -126,6 +126,7 @@ onUnmounted(stopListening)
         :src="skillIconUrl(tag)"
         :alt="tag"
         class="tag-icon"
+        draggable="false"
       />
       {{ tag }}
       <button type="button" class="tag-remove" :aria-label="`Remover ${tag}`" @click="removeTag(index)">
@@ -176,6 +177,14 @@ onUnmounted(stopListening)
 .tag-icon {
   width: 16px;
   height: 16px;
+  /* draggable="false" no template já cobre a maioria dos navegadores, mas
+     Safari/WebKit ainda inicia o drag nativo de imagem (arrastar-pra-salvar)
+     só com isso — -webkit-user-drag é o jeito de desligar isso de vez, senão
+     o navegador captura o gesto de arrastar pra "copiar a imagem" em vez do
+     handler de reordenar por pointer events. */
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
 }
 
 .tag-remove {
