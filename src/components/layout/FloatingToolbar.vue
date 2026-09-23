@@ -1,11 +1,6 @@
 <script setup lang="ts"></script>
 
 <template>
-  <!-- sticky (não fixed): ocupa espaço no fluxo normal do topo da página e
-       só "gruda" quando o usuário rola além dela — assim tanto a view do
-       portfólio (Editar portfólio / Baixar) quanto a de edição (Voltar /
-       Salvar) conseguem usar o mesmo componente sem sobrepor o conteúdo
-       logo abaixo, o que aconteceria com position: fixed puro. -->
   <div class="floating-toolbar no-print">
     <slot />
   </div>
@@ -14,7 +9,13 @@
 <style scoped>
 .floating-toolbar {
   position: sticky;
-  top: calc(var(--space-3) + 64px);
+  /* --app-header-height é medida de verdade em AppHeader.vue (ResizeObserver)
+     porque a altura do header varia demais entre telas — a nav quebra em
+     várias linhas no mobile, principalmente autenticado com o badge de
+     e-mail. Um valor fixo aqui fazia a barra flutuante sobrepor o header
+     sempre que ele crescia além do que foi chutado. O fallback de 64px só
+     cobre o instante antes do primeiro ResizeObserver rodar. */
+  top: calc(var(--app-header-height, 64px) + var(--space-3));
   z-index: 15;
   display: flex;
   flex-wrap: wrap;
@@ -22,5 +23,15 @@
   justify-content: flex-end;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
+}
+
+@media (max-width: 560px) {
+  .floating-toolbar {
+    justify-content: flex-start;
+  }
+
+  .floating-toolbar > :deep(*) {
+    flex: 1 1 auto;
+  }
 }
 </style>

@@ -22,9 +22,9 @@ import ModalTeleport from '../components/ui/ModalTeleport.vue'
 const router = useRouter()
 const { portfolio, loading, fetchOwn } = usePortfolio()
 const { form, saving, saveError, loadFrom, save } = usePortfolioForm('')
-const { loadDraft, clearDraft, restored } = useDraft('portfolio-edit-draft', () => form)
 const { confirm } = useConfirmDialog()
-const { signOut } = useAuth()
+const { user, signOut } = useAuth()
+const { loadDraft, clearDraft, restored } = useDraft('portfolio-edit-draft', () => form, () => user.value?.id ?? null)
 
 // Snapshot do formulário assim que carrega, pra comparar contra o estado
 // atual e saber se há alterações não salvas (botão "Cancelar alterações").

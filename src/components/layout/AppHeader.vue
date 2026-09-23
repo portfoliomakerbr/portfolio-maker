@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { onMounted, onUnmounted, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
 import { usePortfolio } from '../../composables/usePortfolio'
@@ -9,6 +9,26 @@ const router = useRouter()
 const { isAuthenticated, user, signOut } = useAuth()
 const { portfolio, fetchOwn } = usePortfolio()
 const { confirm } = useConfirmDialog()
+
+// A altura real do header varia bastante (a nav quebra em várias linhas em
+// telas estreitas, principalmente autenticado com o badge de e-mail) — um
+// valor fixo em CSS pro topo do FloatingToolbar ficava sobrepondo o header
+// no mobile. Em vez de chutar um valor, mede a altura de verdade e publica
+// como custom property pra quem precisar (FloatingToolbar.vue) se ancorar nela.
+const headerEl = useTemplateRef<HTMLElement>('headerEl')
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  if (!headerEl.value) return
+  const updateHeight = () => {
+    document.documentElement.style.setProperty('--app-header-height', `${headerEl.value!.offsetHeight}px`)
+  }
+  resizeObserver = new ResizeObserver(updateHeight)
+  resizeObserver.observe(headerEl.value)
+  updateHeight()
+})
+
+onUnmounted(() => resizeObserver?.disconnect())
 
 // O header é montado uma vez só (fica fora do router-view), então precisa
 // reagir a login/logout pra saber o username do próprio portfólio — não dá
@@ -32,7 +52,7 @@ async function handleSignOut() {
 </script>
 
 <template>
-  <header class="header">
+  <header ref="headerEl" class="header">
     <div class="header-inner">
       <router-link to="/" class="brand">PortfolioMaker </router-link>
       <nav class="nav">
@@ -142,5 +162,33 @@ async function handleSignOut() {
   height: 6px;
   border-radius: 50%;
   background: var(--color-success);
+}
+
+/* .header-inner não quebrava como bloco: brand e nav disputavam a mesma
+   linha, a nav quebrava item por item internamente, e o align-items:center
+   do pai centralizava o brand no meio vertical dessas linhas — resultado era
+   a nav aparecendo "antes" do brand e o Sair isolado numa 4ª linha, bem
+   longe do topo. Em telas estreitas o brand vira uma linha inteira e a nav
+   vira a linha de baixo (com espaçamento menor), então o cabeçalho todo cabe
+   em 2 linhas normalmente. */
+@media (max-width: 640px) {
+  .header-inner {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .brand {
+    flex: 1 1 100%;
+  }
+
+  .nav {
+    flex: 1 1 100%;
+    gap: var(--space-3);
+  }
+
+  .user-email {
+    max-width: 140px;
+  }
 }
 </style>
