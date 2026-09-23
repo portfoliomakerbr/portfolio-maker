@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Portfolio } from '../../types/portfolio'
 import { faviconUrl, isKnownSkill, skillIconUrl } from '../../lib/icons'
+import { linkHref } from '../../lib/links'
 
 defineProps<{ portfolio: Portfolio }>()
 </script>
@@ -32,7 +33,7 @@ defineProps<{ portfolio: Portfolio }>()
         v-for="link in portfolio.links"
         :key="link.id ?? link.nome"
         class="link-chip"
-        :href="link.url"
+        :href="linkHref(link.url)"
         target="_blank"
         rel="noopener"
         :title="link.url"

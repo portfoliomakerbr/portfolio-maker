@@ -36,20 +36,26 @@ function removeLink(link: LinkItem) {
     <div v-if="links.length" class="outros">
       <div v-for="(link, index) in links" :key="index" class="link-row">
         <input v-model="link.nome" class="input" placeholder="Nome (ex.: LinkedIn, Instagram)" />
-        <input v-model="link.url" class="input" placeholder="https://..." />
+        <input v-model="link.url" class="input" placeholder="https://... ou seu@email.com" />
         <button type="button" class="btn btn-icon" @click="removeLink(link)" aria-label="Remover link">✕</button>
         <span v-if="linkRowError(link)" class="error-text link-row-error">{{ linkRowError(link) }}</span>
       </div>
     </div>
 
     <button type="button" class="btn btn-secondary" @click="addLink">+ Adicionar link</button>
+    <span class="field-hint">
+      Pode ser uma URL (LinkedIn, GitHub, Instagram...) ou um e-mail (ex.: seu@gmail.com) — este aparece
+      publicamente, diferente do e-mail de recebimento de mensagens acima.
+    </span>
   </div>
 </template>
 
 <style scoped>
 .field-hint {
+  display: block;
   font-size: 0.8rem;
   color: var(--color-text-muted);
+  margin-top: var(--space-2);
 }
 
 .outros {

@@ -4,6 +4,8 @@
 // `theme=light` é o parâmetro que a própria API expõe pra inverter ícones que
 // por padrão são pretos/escuros (github, apple, vercel...) pra branco — sem
 // isso, esses ícones ficavam quase invisíveis no fundo escuro do app.
+import { isEmailAddress } from './links'
+
 const SKILL_ICON_BASE = 'https://skillicons.dev/icons?theme=light&i='
 
 export const SKILL_SLUGS = [
@@ -46,15 +48,29 @@ export function skillIconUrl(slug: string): string {
   return `${SKILL_ICON_BASE}${slug.toLowerCase()}`
 }
 
+// Ícone genérico pra links "mailto:" — um endereço de e-mail não tem domínio
+// de site, então o favicon do Google (abaixo) não tem o que buscar. SVG
+// inline em vez de outro serviço externo: é só um envelope, não vale mais
+// uma dependência de rede pra isso.
+const MAIL_ICON = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">' +
+    '<rect width="32" height="32" rx="6" fill="#ffffff"/>' +
+    '<path d="M6 10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V10z" fill="#e4e4e7"/>' +
+    '<path d="M6.5 9.5l9.5 7 9.5-7" stroke="#6b6b75" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>',
+)}`
+
 // Ícones de link (contato/projeto): em vez de manter uma lista fixa de
 // plataformas conhecidas (o usuário agora pode cadastrar qualquer link, não
 // só LinkedIn/GitHub/Instagram...), busca o favicon de verdade do site via
 // o serviço público do Google — funciona pra qualquer domínio, sem precisar
 // reconhecer o nome que o usuário digitou.
 export function faviconUrl(url: string, size = 32): string | null {
+  if (isEmailAddress(url)) return MAIL_ICON
   try {
-    const { hostname } = new URL(url)
-    return `https://www.google.com/s2/favicons?sz=${size}&domain=${hostname}`
+    const parsed = new URL(url)
+    if (parsed.protocol === 'mailto:') return MAIL_ICON
+    return `https://www.google.com/s2/favicons?sz=${size}&domain=${parsed.hostname}`
   } catch {
     return null
   }

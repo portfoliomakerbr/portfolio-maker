@@ -6,6 +6,7 @@ import ContactSection from '../components/portfolio/ContactSection.vue'
 import DownloadMenu from '../components/portfolio/DownloadMenu.vue'
 import FloatingToolbar from '../components/layout/FloatingToolbar.vue'
 import { faviconUrl, isKnownSkill, skillIconUrl } from '../lib/icons'
+import { linkHref } from '../lib/links'
 
 const props = defineProps<{ username: string }>()
 const { portfolio, loading, notFound, error, isOwnPortfolio, fetchByUsername } = usePortfolio()
@@ -82,7 +83,7 @@ function formatarData(data: string | null): string {
                 v-for="link in proj.links"
                 :key="link.id ?? link.nome"
                 class="link-btn"
-                :href="link.url"
+                :href="linkHref(link.url)"
                 target="_blank"
                 rel="noopener"
               >

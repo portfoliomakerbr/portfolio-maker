@@ -9,7 +9,10 @@ const skills = defineModel<string[]>({ required: true })
   <div class="field">
     <label>Habilidades</label>
     <TagInput v-model="skills" placeholder="digite e pressione Enter" :suggestions="SKILL_SLUGS" />
-    <p class="muted hint">Nomes reconhecidos (java, vue, postgres...) ganham ícone automaticamente.</p>
+    <p class="muted hint">
+      Nomes reconhecidos (java, vue, postgres...) ganham ícone automaticamente. Arraste uma habilidade pra
+      reordenar.
+    </p>
   </div>
 </template>
 

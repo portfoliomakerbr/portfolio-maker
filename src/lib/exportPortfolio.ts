@@ -1,4 +1,5 @@
 import type { Portfolio } from '../types/portfolio'
+import { linkHref } from './links'
 
 function formatarPeriodo(inicio: string, fim: string | null): string {
   const formatar = (d: string) => {
@@ -66,6 +67,55 @@ export async function exportPortfolioPdf(portfolio: Portfolio) {
     y += lines.length * 14 + (opts.gap ?? 6)
   }
 
+  // Só a URL fica azul (clicável de verdade no PDF); o nome do link ("Ver
+  // projeto", "Repositório", "linkedin"...) fica preto, igual ao resto do
+  // texto — dois doc.text() na mesma linha em vez de um só, porque o jsPDF
+  // não tem "cor por trecho" dentro de uma única chamada de texto.
+  function linkSegment(nome: string, url: string, x: number, yPos: number, size: number): number {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(size)
+    doc.setTextColor(50, 50, 55)
+    const label = `${nome}: `
+    doc.text(label, x, yPos)
+    const labelWidth = doc.getTextWidth(label)
+
+    doc.setTextColor(79, 70, 229)
+    doc.text(url, x + labelWidth, yPos)
+
+    return labelWidth + doc.getTextWidth(url)
+  }
+
+  // Uma linha por link (Formação/Experiência/seção "Links" do topo).
+  function linkList(links: { nome: string; url: string }[], size = 9.5, gap = 6) {
+    if (!links.length) return
+    for (const l of links) {
+      ensureSpace(14)
+      linkSegment(l.nome, l.url, marginX, y, size)
+      y += 14
+    }
+    y += gap
+  }
+
+  // Vários links lado a lado na mesma linha, quebrando pra próxima quando não
+  // couber mais — usado nos links de projeto (Ver projeto, Repositório...).
+  function linkRow(links: { nome: string; url: string }[], size = 9.5, gap = 14) {
+    if (!links.length) return
+    ensureSpace(14)
+    let x = marginX
+    for (const l of links) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(size)
+      const width = doc.getTextWidth(`${l.nome}: ${l.url}`)
+      if (x !== marginX && x + width > pageWidth - marginX) {
+        y += 14
+        ensureSpace(14)
+        x = marginX
+      }
+      x += linkSegment(l.nome, l.url, x, y, size) + gap
+    }
+    y += 14 + 8
+  }
+
   // Cabeçalho
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(20)
@@ -109,14 +159,13 @@ export async function exportPortfolioPdf(portfolio: Portfolio) {
       if (p.tecnologias.length) {
         paragraph(`Tecnologias: ${p.tecnologias.join(', ')}`, { size: 9.5, color: [130, 130, 138], gap: 2 })
       }
-      const links = p.links.map((l) => `${l.nome}: ${l.url}`).join('   ')
-      paragraph(links, { size: 9.5, color: [79, 70, 229], gap: 14 })
+      linkRow(p.links)
     }
   }
 
   if (portfolio.links.length) {
     heading('Links')
-    paragraph(portfolio.links.map((l) => `${l.nome}: ${l.url}`).join('\n'), { size: 9.5, color: [79, 70, 229] })
+    linkList(portfolio.links, 9.5, 0)
   }
 
   doc.save(`portfolio-${portfolio.username}.pdf`)
@@ -154,12 +203,12 @@ export function exportPortfolioWord(portfolio: Portfolio) {
         <h3>${esc(p.nome)}</h3>
         <p>${nl2br(p.descricao)}</p>
         ${p.tecnologias.length ? `<p class="muted">Tecnologias: ${esc(p.tecnologias.join(', '))}</p>` : ''}
-        ${p.links.length ? `<p>${p.links.map((l) => `<a href="${esc(l.url)}">${esc(l.nome)}</a>`).join('<br>')}</p>` : ''}`
+        ${p.links.length ? `<p>${p.links.map((l) => `${esc(l.nome)}: <a href="${esc(linkHref(l.url))}">${esc(l.url)}</a>`).join('<br>')}</p>` : ''}`
     })
     .join('')
 
   const links = portfolio.links.length
-    ? `<h2>Links</h2><p>${portfolio.links.map((l) => `${esc(l.nome)}: <a href="${esc(l.url)}">${esc(l.url)}</a>`).join('<br>')}</p>`
+    ? `<h2>Links</h2><p>${portfolio.links.map((l) => `${esc(l.nome)}: <a href="${esc(linkHref(l.url))}">${esc(l.url)}</a>`).join('<br>')}</p>`
     : ''
 
   const html = `

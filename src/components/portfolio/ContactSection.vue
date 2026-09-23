@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue'
 import type { Portfolio } from '../../types/portfolio'
 import { faviconUrl } from '../../lib/icons'
+import { linkHref } from '../../lib/links'
 import { isContactFormConfigured, sendContactMessage } from '../../lib/emailjs'
 
 const props = defineProps<{ portfolio: Portfolio }>()
@@ -62,7 +63,7 @@ async function handleSubmit() {
         <div v-for="link in portfolio.links" :key="link.id ?? link.nome" class="card contact-card">
           <div class="contact-card-info">
             <img v-if="faviconUrl(link.url)" :src="faviconUrl(link.url)!" :alt="link.nome" class="contact-icon" />
-            <a :href="link.url" target="_blank" rel="noopener" class="contact-link">{{ link.url }}</a>
+            <a :href="linkHref(link.url)" target="_blank" rel="noopener" class="contact-link">{{ link.url }}</a>
           </div>
           <span v-if="copiedKey === link.nome" class="copied-label">Copiado!</span>
           <button type="button" class="btn btn-icon" @click="copy(link.nome, link.url)">

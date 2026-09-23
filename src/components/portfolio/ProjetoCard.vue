@@ -57,7 +57,7 @@ function removeLink(link: LinkItem) {
       <div v-if="projeto.links.length" class="links-list">
         <div v-for="(link, linkIndex) in projeto.links" :key="linkIndex" class="link-row">
           <input v-model="link.nome" class="input" placeholder="Nome (ex.: Ver projeto)" />
-          <input v-model="link.url" class="input" placeholder="https://..." />
+          <input v-model="link.url" class="input" placeholder="https://... ou seu@email.com" />
           <button type="button" class="btn btn-icon" @click="removeLink(link)" aria-label="Remover link">✕</button>
           <span v-if="linkRowError(link)" class="error-text link-row-error">{{ linkRowError(link) }}</span>
         </div>
